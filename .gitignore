@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# uv
+.uv/
+
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Type checkers
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+*.cover
+.hypothesis/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project: large data and model weights — NEVER commit
+data/raw/
+data/processed/
+data/external/
+results/runs/
+*.pdb
+*.cif
+*.fasta
+*.fa
+*.fastq
+*.fastq.gz
+*.npz
+*.npy
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.gguf
+*.zip
+*.tar.gz
+*.tgz
+
+# Allow small reference data deliberately
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+!results/runs/.gitkeep
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.yaml
+secrets.json
+
+# Local Claude Code settings (user-specific permissions, not for the team)
+.claude/settings.local.json

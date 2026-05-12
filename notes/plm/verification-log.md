@@ -1,0 +1,101 @@
+# Verification log — claims cross-checked vs. primary sources
+
+**Policy:** Every numerical or attribution claim in our notes must be cross-checked against the primary source (paper, repository, database entry). This log records the result of every check. Status values: **CONFIRMED**, **REFUTED** (with corrected value), **UNVERIFIED** (could not access primary source — usually paywall).
+
+Verification rounds:
+- **2026-05-12 round 1** — initial draft surveys produced by background literature agents `enFnCas9-overview-DRAFT.md` and `plm-nuclease-engineering-DRAFT.md`; verification done by three independent fact-check agents.
+
+---
+
+## Round 1 — enFnCas9 draft
+
+| # | Claim | Status | Correction / source |
+|---|-------|--------|---------------------|
+| 1 | Paper title "PAM-flexible Engineered FnCas9 variants for robust and ultra-precise genome editing and diagnostics" | CONFIRMED | https://pubmed.ncbi.nlm.nih.gov/38942756/ |
+| 2 | *Nat Commun* 15:5471, 2024 | CONFIRMED | PubMed record |
+| 3 | DOI 10.1038/s41467-024-49233-w | CONFIRMED | https://doi.org/10.1038/s41467-024-49233-w |
+| 4 | First author = Riya Rauthan | **REFUTED** | First author is **Sundaram Acharya**. Rauthan is mid-list. Maiti & Chakraborty are senior/corresponding. |
+| 5 | en1 = E1369R single | CONFIRMED | Paper text snippet via Google indexing |
+| 6 | en15 = E1603H single | CONFIRMED | Resolves the draft's flagged uncertainty |
+| 7 | en31 = G1243T + E1369R + E1449H triple | CONFIRMED | Paper text snippet |
+| 8 | All three variants >2-fold cleavage rate vs. WT FnCas9 in vitro | CONFIRMED | Paper text snippet |
+| 9 | K_d en1 = 91.33 ± 29.8 nM, K_d en15 = 49.16 ± 10.96 nM, K_d WT = 170 ± 31.53 nM (MST on VEGFA3) | CONFIRMED | Paper text snippet (numerical precision corrected) |
+| 10 | ~90% indels at HBB in HEK293T | CONFIRMED with caveat | Specific to guide g21; different guides give different numbers (e.g., a separate snippet shows en1 ~45% vs SpCas9 ~30% at a different HBB site) |
+| 11 | enFnCas9 outperforms SpCas9-HF1 and eSpCas9 on DCX HDR knock-in (~6.8 kb donor) | CONFIRMED qualitatively | Exact knock-in percentages NOT extracted from snippets |
+| 12 | PAM expanded NGG → NRG/NGR | CONFIRMED | en31 ranges 5'-NGG > NGA > NAG-3' |
+| 13 | ~3.5× expansion of targetable human genome sites | CONFIRMED | Paper text snippet |
+| 14 | ~1,300-fold higher specificity than SpCas9 | **REFUTED** (provenance only) | The figure is from the **Acharya 2024 *Nat Commun* paper itself** (Digenome-seq), NOT the 2025 press release. Cite the paper. |
+| 15 | Hirano et al. 2016, *Cell* 164(5):950–961, DOI 10.1016/j.cell.2016.01.039 | CONFIRMED | PMID 26875867 |
+| 16 | FnCas9-RHA = E1369R + E1449H (double mutant) | **REFUTED** | RHA is a **TRIPLE mutant: E1369R / E1449H / R1556A**. Draft is missing R1556A. |
+| 17 | FnCas9-RHA PAM = 5'-YG-3' | CONFIRMED | Hirano 2016 |
+| 18 | Acharya et al. 2019 PNAS 116(42):20959-20968, DOI 10.1073/pnas.1818461116 | CONFIRMED | DOI resolves |
+| 19 | Azhar et al. 2021 *Biosens Bioelectron* (FELUDA dFnCas9), PMID 33866136 | CONFIRMED | "Rapid and accurate nucleobase detection using FnCas9 and its application in COVID-19 diagnosis" |
+| 20 | Kumar et al. 2021 *eLife* 10:e67130 (FELUDA SARS-CoV-2) | CONFIRMED | https://doi.org/10.7554/eLife.67130 (PMID 34106048) |
+| 21 | FrCas9 Chen et al. *Nat Commun* 13, 2022, DOI 10.1038/s41467-022-29089-8 — *Faecalibaculum rodentium*, NNTA PAM | CONFIRMED | DOI resolves |
+| 22 | "afFnCas9" / MUTE-seq (Ye et al. *Adv Materials* 2025) | CONFIRMED with name correction | Actual variant nickname in paper is **FnCas9-AF2** (advanced-fidelity), not "afFnCas9". Title: "MUTE-Seq: An Ultrasensitive Method for Detecting Low-Frequency Mutations in cfDNA With Engineered Advanced-Fidelity FnCas9." DOI 10.1002/adma.202505208 |
+| 23 | UniProt A0Q5Y3: 1,629 aa, *F. tularensis* subsp. *novicida* U112 | CONFIRMED | https://rest.uniprot.org/uniprotkb/A0Q5Y3.txt — "SQ SEQUENCE 1629 AA" |
+| 24 | PDB 5B2O: WT FnCas9 + sgRNA + DNA, TGG PAM, ~1.7 Å | CONFIRMED | RCSB; 1.70 Å |
+| 25 | PDB 5B2P: WT FnCas9, TGA PAM | CONFIRMED | RCSB |
+| 26 | PDB 5B2Q: FnCas9 RHA variant | CONFIRMED with note | 5B2Q DNA is bound with TGG PAM (not 5'-YG-3') |
+| 27 | US patent 11,970,699 B2 exists, claims enFnCas9 | CONFIRMED (metadata) | Title "Kinetically enhanced engineered FnCas9 and its uses thereof"; inventors include Chakraborty, Maiti, Acharya, Nureki, Nishimasu, Hirano; assignees CSIR + Univ. Tokyo. Full claim text not retrieved. |
+
+## Round 1 — PLM-nuclease engineering draft
+
+| # | Claim | Status | Correction / source |
+|---|-------|--------|---------------------|
+| P1 | OpenCRISPR-1 paper exists at DOI 10.1038/s41586-025-09298-z, *Nature* 2025 | CONFIRMED | https://www.nature.com/articles/s41586-025-09298-z, PMID 40739342, PMC12422970 |
+| P1a | Title "Design of highly functional genome editors by modelling CRISPR-Cas sequences" | CONFIRMED | Nature 645:518-525 (2025) |
+| P1b | bioRxiv preprint 2024.04.22.590591 | CONFIRMED | Preprint title slightly different |
+| P1c | 1M+ CRISPR operons in atlas | CONFIRMED | "more than 1 million CRISPR operons" from 26 Tb of (meta)genomes |
+| P1d | 240k Cas9s in atlas | UNVERIFIED | Not in accessible abstract/summary; paper body paywalled |
+| P1e | ~4M sequences generated | UNVERIFIED | Sources mention "4.8× protein clusters"; literal 4M count unconfirmed |
+| P1f | ~200 candidates tested in mammalian cells | UNVERIFIED | Body paywalled |
+| P1g | 403 aa differences vs SpCas9 | CONFIRMED | Press summaries confirm "403 aa differences from SpCas9; 182 from any known natural Cas9" |
+| P1h | On-target 55.7% vs SpCas9 48.3% (HEK293T) | CONFIRMED | Press summary |
+| P1i | ~95% off-target reduction | CONFIRMED | "0.32% vs 6.07%" — ~95% reduction |
+| P1j | Lower immunogenicity (iELISA) | CONFIRMED qualitatively | iELISA specifics not in abstract |
+| P2 | Protein2PAM, Nat Biotechnol Feb 2026, DOI 10.1038/s41587-025-02995-0 | CONFIRMED | Online Feb 2, 2026 |
+| P2a | First author Ruffolo | **REFUTED** | **First author is Stephen Nayfach.** Ruffolo is mid-list. |
+| P2b | bioRxiv preprint 2025.01.06.631536 | CONFIRMED | Linked via PMC11741284 |
+| P2c | 45k+ Cas-PAM pairs training | CONFIRMED | "over 45,000 CRISPR-Cas PAMs" |
+| P2d | NmeN4G.1 recognises 42 N4G PAMs vs 7 WT | UNVERIFIED | Abstract states "broadened PAM"; exact counts unconfirmed |
+| P2e | 50× higher in-vitro cleavage | CONFIRMED | "up to 50-fold increase ... compared to wild type in vitro" |
+| P3 | AiCE PMID 40628259, Cell 2025, Gao lab | CONFIRMED | PMID resolves |
+| P3a | DOI claim S0092-8674(25)00680-4 | **REFUTED** | Actual DOI is **10.1016/j.cell.2025.06.014**. The "S00..." string is the Cell article identifier, not a DOI. |
+| P3b | enABE8e 5-bp editing window | CONFIRMED | PMID page |
+| P3c | enSdd6-CBE ~1.3× fidelity | CONFIRMED | PMID page |
+| P3d | enDdd1-DdCBE 14.3× mt editing | CONFIRMED | PMID page |
+| P4 | LigandMPNN, Dauparas et al., Nat Methods 2025, DOI 10.1038/s41592-025-02626-1 | CONFIRMED | Nat Methods 22:717-723 (2025), PMID 40155723 |
+| P5 | PAMmla, Nature July 2025, PMID 40262634, Walton/Joung lab | **PARTIALLY REFUTED** | PMID + Nature 2025 correct. **Senior author is Benjamin P. Kleinstiver, NOT Walton or Joung.** First author Rachel A. Silverstein. DOI **10.1038/s41586-025-09021-y**. |
+| P6 | Spencer & Zhang, *Sci Rep* 2017, DOI 10.1038/s41598-017-17081-y, SpCas9 DMS | CONFIRMED | Title: "Deep mutational scanning of S. pyogenes Cas9 reveals important functional domains." PMID 29203891 |
+| P6a | "Only published Cas9 DMS" — negative claim | UNVERIFIABLE (plausible) | Cannot definitively prove a negative. Note: a recent Nat Commun 2025 paper s41467-025-60925-9 describes Cas1/Cas2 DMS — not Cas9, so the Cas9-specific claim stands. |
+| P7 | RFdiffusion Watson et al. Nature 2023 | CONFIRMED | https://www.nature.com/articles/s41586-023-06415-8 — "De novo design of protein structure and function with RFdiffusion" |
+| P7a | RFdiffusion-AA Krishna et al. Science 2024, DOI 10.1126/science.adl2528 | CONFIRMED | "Generalized biomolecular modeling and design with RoseTTAFold All-Atom" (RFdiffusionAA introduced within) |
+| P8 | Evo Nguyen et al. Science 2024 | CONFIRMED | DOI 10.1126/science.ado9336 |
+| P8a | Evo 2 Science 2025 | **REFUTED** | **Evo 2 was published in Nature 2026, not Science 2025.** DOI **10.1038/s41586-026-10176-5**. Title: "Genome modelling and design across all domains of life with Evo 2." First author Garyk Brixi. |
+| T-ESM-IF1 | ESM-IF1 has ~1024 aa context limit | **REFUTED** (provenance) | No explicit context-length statement in the GitHub README. If true, source must be the Hsu et al. 2022 paper, not the repo. |
+| T-OpenCRISPR | OpenCRISPR-1 weights not released, only sequence + license | CONFIRMED | Repo distributes FASTA + gRNA + bespoke license |
+| T-AF3-bench | AF3 / Boltz-2 not benchmarked on Cas9-sgRNA-DNA | UNVERIFIABLE (likely true) | No such benchmark found in FoldBench, Boltz-2, or AF3 supplementary materials. Cannot prove a negative. |
+
+## Round 1 — Tool repos
+
+Single source of truth is `docs/tools-inventory.md`. All tools accessed and metadata verified.
+
+Key corrections from drafts:
+- **Chai-1 license is Apache-2.0** (draft said MIT)
+- **CRISPR-Cas-Atlas is CC BY-NC 4.0** (draft said "Open")
+- **Protein2PAM** has Polyform-NC code license + CC-BY-NC weight license (draft said Apache-2.0)
+- **ESM-2 / fair-esm repo is archived** (last commit 2024-02-07) — STALE
+- **ProGen2 repo is stale** (last commit 2023-08-04)
+- **RFdiffusion-AA repo is stale** (last commit 2024-07-09; ~22 months as of 2026-05-12)
+- All other tool repos VERIFIED active.
+
+---
+
+## Outstanding items for future verification rounds
+
+1. Exact HDR knock-in percentages for en1 / en15 / en31 vs SpCas9-HF1 / eSpCas9 at DCX → requires Nature Communications full PDF access.
+2. OpenCRISPR-1 specific numbers (240k Cas9s, ~4M generated, ~200 tested) → requires Nature paper full PDF access.
+3. Protein2PAM "42 N4G PAMs vs 7 for WT" → requires Nat Biotechnol full text.
+4. Original source for an ESM-IF1 1024-aa context limit, if it exists → Hsu et al. 2022 paper.
+5. Independent benchmark of AlphaFold3 / Boltz-2 on Cas9-sgRNA-DNA complexes → field gap, not a verification gap.
