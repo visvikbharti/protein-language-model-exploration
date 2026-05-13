@@ -100,6 +100,10 @@ def main() -> int:
     parser.add_argument("--single-sequence", action="store_true",
                         help="Force msa: empty (faster, lower-confidence). "
                              "Default is to omit msa: line so --use_msa_server can fetch ColabFold MSA.")
+    parser.add_argument("--truncate",
+                        help="Truncate protein to a UniProt residue range, e.g. '1230-1620' for WED+PI only. "
+                             "Mutations applied first, then truncation. Use this to fit on smaller GPUs "
+                             "(V100 32GB OOMs on full 1629-aa FnCas9 with sgRNA+DNA).")
     args = parser.parse_args()
 
     pdb_path = Path(args.pdb)
@@ -123,6 +127,12 @@ def main() -> int:
         "fncas9_plm5":  ("FnCas9-PLM5", apply_mutant(wt, parse_mutant("Y1249F/Y1341L/A1325K/K1479F"))),
         "fncas9_en31":  ("FnCas9-en31", apply_mutant(wt, parse_mutant("G1243T/E1369R/E1449H"))),
     }
+
+    if args.truncate:
+        lo, hi = (int(x) for x in args.truncate.split("-"))
+        log.info("\nTruncating protein chains to UniProt residues %d-%d (length %d)",
+                 lo, hi, hi - lo + 1)
+        variants = {slug: (name, seq[lo - 1:hi]) for slug, (name, seq) in variants.items()}
 
     use_msa = not args.single_sequence
     for slug, (name, seq) in variants.items():

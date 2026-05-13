@@ -62,8 +62,14 @@ VARIANTS=(
 
 # Regenerate YAMLs each run (cheap, ~1 sec) so they stay in sync with the
 # latest candidate definitions. Idempotent — overwrites.
-echo "[setup] Generating Boltz input YAMLs..."
-PYTHONPATH=src python scripts/prepare_boltz_yamls.py
+#
+# Truncation: full 1,629-aa FnCas9 + sgRNA + DNA OOMs on V100 32GB at fp16
+# (verified empirically — job 214530, all 4 variants OOM'd with
+# "WARNING: ran out of memory, skipping batch"). Truncate to WED+PI region
+# (residues 1230-1620, 391 aa) — keeps all engineered positions in their
+# natural ligand context.
+echo "[setup] Generating Boltz input YAMLs (PI-domain truncation for V100 fit)..."
+PYTHONPATH=src python scripts/prepare_boltz_yamls.py --truncate 1230-1620
 
 # Loop over variants. On V100 32GB, each full-length FnCas9 + sgRNA + DNA
 # prediction takes ~30-60 min with 5 diffusion samples. With 4 variants
