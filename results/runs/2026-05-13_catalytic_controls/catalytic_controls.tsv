@@ -1,0 +1,7 @@
+variant	rationale	35M_llr	35M_rank	650M_llr	650M_rank
+D11A	RuvC catalytic Asp → Ala (canonical loss-of-function)	-1.570	7	-7.429	11
+D11G	RuvC catalytic Asp → Gly	-1.614	9	-7.162	10
+D11N	RuvC catalytic Asp → Asn (similar shape, loses charge)	-1.094	3	-4.576	1
+H969A	HNH catalytic His → Ala	-7.464	17	-10.128	6
+H969N	HNH catalytic His → Asn	-4.851	3	-8.764	3
+H975A	HNH motif second His → Ala	+1.618	5	+0.609	6

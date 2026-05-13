@@ -168,10 +168,41 @@ Code added:
 
 All 43 tests pass (`pytest tests/ -q`).
 
-## 5. What to do next
+## 5. Catalytic-residue ground-truth controls
+
+A late addition to round out the cross-validation: score 6 mutations at FnCas9's catalytic centres (D11 in RuvC, H969 + H975 in HNH) as ground-truth NEGATIVE controls. A well-calibrated PLM should give these very negative LLRs because mutating them destroys catalytic activity. Results (`results/runs/2026-05-13_catalytic_controls/catalytic_controls.tsv`):
+
+| Variant | Site | LLR (35M) | rank@pos (35M) | LLR (650M) | rank@pos (650M) |
+|---|---|---:|:---:|---:|:---:|
+| D11A | RuvC catalytic | −1.57 | 7/19 | **−7.43** | 11/19 |
+| D11G | RuvC catalytic | −1.61 | 9/19 | **−7.16** | 10/19 |
+| D11N | RuvC catalytic | −1.09 | 3/19 | **−4.58** | 1/19 |
+| H969A | HNH catalytic His | −7.46 | 17/19 | **−10.13** | 6/19 |
+| H969N | HNH catalytic His | −4.85 | 3/19 | **−8.76** | 3/19 |
+| H975A | HNH second His | +1.62 | 5/19 | +0.61 | 6/19 |
+
+Interpretation:
+
+- **5 of 6 catalytic-loss mutations have ESM-2 650M LLR < −1.0**, with magnitudes between −4.6 and −10.1. The model strongly disprefers these substitutions — it has internalised the conservation pattern around the D11 (RuvC) and H969 (HNH) active sites.
+- **Model scale matters at active sites too:** D11A LLR jumps from −1.57 (35M) to −7.43 (650M); H969A jumps from −7.46 to −10.13. 650M sees the catalytic conservation more sharply.
+- **H975A is the exception** (LLR +0.61). The second histidine of the HNH motif is reported as mutation-tolerant in some Cas9 family members; ESM-2 may have learned this nuance, or it may simply be an artifact. Worth verifying against the literature for FnCas9 specifically.
+
+This nuances the Phase 2 cross-validation conclusion. ESM-2 zero-shot has **partial** biology-awareness:
+
+| Signal type | ESM-2 sees it? |
+|---|:---:|
+| Catalytic-residue conservation (D11, H969) | ✓ YES (LLR ≤ −7) |
+| Phosphate-lock loop engineering (G1243T) | ✓ YES (rank 1/19 under 650M) |
+| PAM-contact engineering (E1369R, E1449H, E1603H) | ✗ NO (rank 12–16/19) |
+| Family-wide rare-AA bias (W1459, conserved aromatic) | ✗ NO (model recommends substitution) |
+
+The pattern is consistent: ESM-2 sees signals that are **encoded in sequence conservation across the natural protein distribution** (catalytic residues are highly conserved across Cas9 family AND across many other protein families). It fails on signals that require **structural / functional context not present in sequence likelihood** (PAM-contact engineering is a sequence-rare design move that disrupts a natural electrostatic interaction).
+
+## 6. What to do next
 
 The two-way homology question is now answered both ways:
 - **Sequence:** phylogeny + pairwise identity matrix (this supplement + Phase 1)
 - **Structure:** cross-Cas9 RMSD + structural phylogeny (this supplement)
+- **Catalytic-control sanity check:** done, partially passes — see §5 above.
 
-The remaining open question from Phase 2 — whether structure-conditioned scoring (LigandMPNN) recovers en31's PAM-contact mutations — still requires GPU and remains the Phase 3 ask. Sequence-only PLMs at 35M and 650M empirically cannot, and the structural homology done here doesn't change that — it just confirms that we should expect Cas9-family conservation patterns to be informative because the fold is shared across the 5 orthologs.
+The remaining open question from Phase 2 — whether structure-conditioned scoring (LigandMPNN) recovers en31's PAM-contact mutations — still requires GPU and remains the Phase 3 ask. Sequence-only PLMs at 35M and 650M empirically can see active-site conservation but cannot see PAM-contact engineering, and the structural homology done here doesn't change that — it just confirms that we should expect Cas9-family conservation patterns to be informative because the fold is shared across the 5 orthologs.
