@@ -55,12 +55,30 @@ echo "Input PDB: $INPUT_PDB"
 echo "Output dir: $OUTPUT_DIR"
 echo
 
-singularity run --nv "$SIF" \
-    predict.py \
-        --pdb "$INPUT_PDB" \
-        --output "$OUTPUT_DIR/ddg.csv" \
-        --chain A \
-        --positions 1230-1620
+# The peptoneltd container is distroless (no cat/ls/sh) and the entrypoint
+# exec's whatever argv we pass it. The predict.py script lives at
+# /app/proteinmpnn_ddg/predict.py and must be invoked via python3
+# (verified from the upstream README, 2026-05-13).
+#
+# Flag names from the README:
+#   --pdb_path    input PDB
+#   --chains      chain id (comma-separated for multiple)
+#   --outpath     output CSV
+#   --seed        random seed
+#   --model_name  model checkpoint version
+#
+# No documented --positions flag; the tool runs full-chain saturation by
+# default. We extract the 1230-1620 subset in scripts/proteinmpnn_ddg_analyze.py.
+# Bind the working dir so the container can read $INPUT_PDB and write $OUTPUT_DIR.
+singularity run --nv \
+    --bind "$PWD:/workspace" --pwd /workspace \
+    "$SIF" \
+    python3 /app/proteinmpnn_ddg/predict.py \
+        --pdb_path "$INPUT_PDB" \
+        --chains A \
+        --outpath "$OUTPUT_DIR/ddg.csv" \
+        --seed 42 \
+        --model_name v_48_020
 
 echo
 echo "===== Done ====="
