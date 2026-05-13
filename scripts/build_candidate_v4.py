@@ -58,6 +58,37 @@ def load_aggregate(tsv_path: Path) -> list[dict]:
     return rows
 
 
+def load_ddg(csv_path: Path) -> dict[tuple[int, str], float]:
+    """Load proteinmpnn_ddg LONG-format CSV ((idx),pre,post,pos,_,logit_difference_ddg).
+
+    Returns (pos, post_aa) -> ddg in kcal/mol (positive = destabilizing).
+    """
+    out: dict[tuple[int, str], float] = {}
+    text = csv_path.read_text().splitlines()
+    cols = [c.strip().lower() for c in text[0].split(",")]
+    i_pos = cols.index("pos")
+    i_pre = cols.index("pre")
+    i_post = cols.index("post")
+    ddg_idxs = [i for i, c in enumerate(cols) if "ddg" in c]
+    if not ddg_idxs:
+        raise ValueError(f"No ΔΔG column in {csv_path}: {cols}")
+    i_ddg = ddg_idxs[-1]
+    for line in text[1:]:
+        if not line.strip():
+            continue
+        parts = [p.strip() for p in line.split(",")]
+        try:
+            pos = int(parts[i_pos])
+            pre = parts[i_pre].upper()
+            post = parts[i_post].upper()
+            if pre == post:
+                continue
+            out[(pos, post)] = float(parts[i_ddg])
+        except (ValueError, IndexError):
+            continue
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--aggregate", required=True,
@@ -74,6 +105,14 @@ def main() -> int:
     parser.add_argument("--max-class-conservation", type=float, default=0.5)
     parser.add_argument("--lambda-cons", type=float, default=1.0)
     parser.add_argument("--min-spacing", type=int, default=5)
+    parser.add_argument("--ddg-csv",
+                        help="Optional proteinmpnn_ddg ddg.csv — if given, reject any "
+                             "candidate whose single-position ΔΔG exceeds --max-single-ddg")
+    parser.add_argument("--max-single-ddg", type=float, default=3.2,
+                        help="Reject candidates with apo ΔΔG > this (kcal/mol). "
+                             "Default 3.2 = en31's E1369R cost (known-functional ceiling).")
+    parser.add_argument("--candidate-name", default="FnCas9-PLM4",
+                        help="Header tag + meta filename (e.g. FnCas9-PLM5 when using --ddg-csv)")
     args = parser.parse_args()
 
     fncas9 = load_fasta(Path(args.fasta))[0].sequence
@@ -86,8 +125,15 @@ def main() -> int:
     cons_full = compute_conservation(fncas9, orthologs)
     cons_by_pos = {c.position: c.class_conservation for c in cons_full}
 
+    ddg_by_var: dict[tuple[int, str], float] = {}
+    if args.ddg_csv:
+        ddg_by_var = load_ddg(Path(args.ddg_csv))
+        log.info("Loaded %d ΔΔG entries from %s (gate: ΔΔG ≤ %.2f kcal/mol)",
+                 len(ddg_by_var), args.ddg_csv, args.max_single_ddg)
+
     # Candidate filtering
-    candidates: list[tuple[Variant, float, float, float, float]] = []
+    candidates: list[tuple[Variant, float, float, float, float, float | None]] = []
+    n_rejected_ddg = 0
     for row in rows:
         pos = row["pos"]
         wt = row["wt"]
@@ -103,43 +149,53 @@ def main() -> int:
         cc = cons_by_pos.get(pos, 0.0)
         if cc >= args.max_class_conservation:
             continue
-        # Use log odds for scoring (more comparable across positions than raw freq)
-        # Add 1e-3 floor on wt_freq to avoid log(0).
+        ddg = ddg_by_var.get((pos, top_aa)) if ddg_by_var else None
+        if ddg is not None and ddg > args.max_single_ddg:
+            n_rejected_ddg += 1
+            continue
+        # log odds (more comparable across positions than raw freq)
         log_odds = math.log(top_freq / max(wt_freq, 1e-3))
         composite = log_odds - args.lambda_cons * cc
         candidates.append((Variant(wt=wt, pos=pos, mut=top_aa),
-                           top_freq, wt_freq, cc, composite))
+                           top_freq, wt_freq, cc, composite, ddg))
     candidates.sort(key=lambda x: -x[4])
-    log.info("After filters (top_freq>=%.2f, wt_freq<=%.2f, class_cons<%.2f): %d candidates",
+    log.info("After filters (top_freq>=%.2f, wt_freq<=%.2f, class_cons<%.2f%s): %d candidates",
              args.min_top_freq, args.max_wt_freq, args.max_class_conservation,
+             f", ΔΔG≤{args.max_single_ddg:.2f}" if ddg_by_var else "",
              len(candidates))
+    if ddg_by_var and n_rejected_ddg:
+        log.info("  (ΔΔG gate rejected %d positions otherwise passing the freq+cons filters)",
+                 n_rejected_ddg)
 
-    chosen: list[tuple[Variant, float, float, float, float]] = []
+    chosen: list[tuple[Variant, float, float, float, float, float | None]] = []
     used_positions: list[int] = []
-    for v, top_f, wt_f, cc, comp in candidates:
+    for v, top_f, wt_f, cc, comp, ddg in candidates:
         if any(abs(v.pos - p) < args.min_spacing for p in used_positions):
             continue
-        chosen.append((v, top_f, wt_f, cc, comp))
+        chosen.append((v, top_f, wt_f, cc, comp, ddg))
         used_positions.append(v.pos)
         if len(chosen) >= args.top_k:
             break
 
-    log.info("\n=== FnCas9-PLM4 selection (LigandMPNN structure-conditioned) ===")
-    for v, top_f, wt_f, cc, comp in chosen:
-        log.info("  %-8s  top_freq=%.3f  wt_freq=%.3f  class_cons=%.2f  composite=%+.3f",
-                 str(v), top_f, wt_f, cc, comp)
+    name = args.candidate_name
+    log.info("\n=== %s selection (LigandMPNN structure-conditioned%s) ===",
+             name, " + ΔΔG-gated" if ddg_by_var else "")
+    for v, top_f, wt_f, cc, comp, ddg in chosen:
+        ddg_str = f"  ΔΔG={ddg:+.2f}" if ddg is not None else ""
+        log.info("  %-8s  top_freq=%.3f  wt_freq=%.3f  class_cons=%.2f  composite=%+.3f%s",
+                 str(v), top_f, wt_f, cc, comp, ddg_str)
 
     if len(chosen) < args.top_k:
         log.warning("Only found %d candidates passing all filters (wanted %d)",
                     len(chosen), args.top_k)
         if not chosen:
-            log.error("No candidates passed filters — try relaxing --min-top-freq or --max-wt-freq")
+            log.error("No candidates passed filters — try relaxing thresholds")
             return 1
 
-    plm4_mutant = tuple(v for v, _, _, _, _ in chosen)
-    plm4_seq = apply_mutant(fncas9, plm4_mutant)
-    plm4_str = mutant_str(plm4_mutant)
-    log.info("\nFnCas9-PLM4 mutations: %s", plm4_str)
+    cand_mutant = tuple(v for v, _, _, _, _, _ in chosen)
+    cand_seq = apply_mutant(fncas9, cand_mutant)
+    cand_str = mutant_str(cand_mutant)
+    log.info("\n%s mutations: %s", name, cand_str)
 
     # Retrospective check: LigandMPNN's posterior on en31/en15 mutations
     log.info("\n=== en31/en15 mutations under LigandMPNN posterior ===")
@@ -157,40 +213,45 @@ def main() -> int:
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    fasta_path = out_dir / f"fncas9_variants_{name.lower().replace('-', '_')}.fasta"
+    source_tag = ("LigandMPNN structure-conditioned"
+                  + (" + apo-ΔΔG-gated" if ddg_by_var else ""))
     write_fasta(
         [
-            FastaRecord(header=f"FnCas9-PLM4 LigandMPNN structure-conditioned; {plm4_str}",
-                        sequence=plm4_seq),
+            FastaRecord(header=f"{name} {source_tag}; {cand_str}", sequence=cand_seq),
             FastaRecord(header="FnCas9-WT", sequence=fncas9),
             FastaRecord(header="FnCas9-en31 G1243T/E1369R/E1449H",
                         sequence=apply_mutant(fncas9, EN31_REFERENCE)),
             FastaRecord(header="FnCas9-en15 E1603H",
                         sequence=apply_mutant(fncas9, EN15_REFERENCE)),
         ],
-        out_dir / "fncas9_variants_v4.fasta",
+        fasta_path,
     )
-    log.info("Wrote %s", out_dir / "fncas9_variants_v4.fasta")
+    log.info("Wrote %s", fasta_path)
 
     meta = {
-        "candidate_name": "FnCas9-PLM4",
-        "mutations": plm4_str,
-        "source": "LigandMPNN structure-conditioned design",
+        "candidate_name": name,
+        "mutations": cand_str,
+        "source": source_tag,
         "aggregate_tsv": str(args.aggregate),
+        "ddg_csv": str(args.ddg_csv) if args.ddg_csv else None,
         "top_k": args.top_k,
         "min_top_freq": args.min_top_freq,
         "max_wt_freq": args.max_wt_freq,
         "max_class_conservation": args.max_class_conservation,
+        "max_single_ddg": args.max_single_ddg if ddg_by_var else None,
         "lambda_cons": args.lambda_cons,
         "min_spacing": args.min_spacing,
         "selection": [
             {"variant": str(v), "top_freq": tf, "wt_freq": wf,
-             "class_cons": cc, "composite": comp}
-            for v, tf, wf, cc, comp in chosen
+             "class_cons": cc, "composite": comp, "ddg": ddg}
+            for v, tf, wf, cc, comp, ddg in chosen
         ],
         "built_at_utc": datetime.now(timezone.utc).isoformat(),
     }
-    (out_dir / "FnCas9-PLM4.meta.json").write_text(json.dumps(meta, indent=2))
-    log.info("Wrote %s", out_dir / "FnCas9-PLM4.meta.json")
+    meta_path = out_dir / f"{name}.meta.json"
+    meta_path.write_text(json.dumps(meta, indent=2))
+    log.info("Wrote %s", meta_path)
     return 0
 
 
