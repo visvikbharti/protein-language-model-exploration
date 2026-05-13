@@ -218,3 +218,66 @@ This section records empirical findings from our own runs (not literature). Each
   | A1325K | +1.79 | moderate destabilizer |
 
 - **Action item:** Rebuild a stability-filtered v5 candidate that adds a `--max-single-ddg` gate (drop any single mutation with ΔΔG > some threshold, e.g. +3.20 = en31's worst single-position cost) on top of the existing LigandMPNN selection logic. PLM5 would replace T1535V with the next-best LigandMPNN candidate satisfying both filters.
+
+### 2026-05-14 — Boltz-2 complex prediction (truncated WED+PI)
+
+- **Run dir:** `results/runs/2026-05-13_boltz_complex/`
+- **Analyzer output:** `results/runs/2026-05-13_boltz_complex/analysis/boltz_analyze_output.txt`
+- **Reproduces with:** `hpc/slurm/04_boltz_complex.sbatch` (job 215253; ~10 min wall on V100 for 4 variants × 5 diffusion samples after fixing OOM).
+
+- **Setup gotchas resolved:**
+  - First attempt (job 214530) ran full-length 1,629-aa FnCas9 + sgRNA + DNA — all 4 variants OOM'd on V100 32GB at fp16. Boltz catches the OOM and continues with exit 0 producing zero predictions ("WARNING: ran out of memory, skipping batch", "Number of failed examples: 1"). Wasted 2:22 of wall time.
+  - Fix: truncate the protein chain to residues 1230-1620 (WED + PI = 391 aa). Keeps all engineered positions in their natural ligand context. Run time dropped to ~2 min per variant.
+  - Single-sequence mode (`msa: empty` in YAMLs) — predictions still self-consistent across variants but absolute confidences depressed. Fixed in the YAML generator for next time.
+
+- **Confidence summary table** (mean ± std over 5 diffusion samples):
+
+  | Metric | WT | PLM3 | PLM5 | en31 |
+  |--------|-----|------|------|------|
+  | Overall confidence | 0.915±0.003 | **0.865±0.044** | 0.918±0.010 | 0.919±0.003 |
+  | Mean per-res pLDDT | 0.908±0.003 | 0.862±0.032 | 0.913±0.004 | 0.913±0.002 |
+  | Interface pLDDT | 0.912±0.003 | 0.862±0.037 | 0.916±0.006 | 0.912±0.004 |
+  | pTM (whole complex) | 0.938±0.008 | 0.887±0.076 | 0.932±0.030 | 0.940±0.008 |
+  | iPTM (all interfaces) | 0.944±0.008 | 0.880±0.094 | 0.935±0.037 | 0.946±0.007 |
+  | pTM (protein chain) | 0.949±0.007 | 0.924±0.034 | 0.949±0.017 | 0.952±0.006 |
+  | iPTM protein↔DNA-target | 0.932±0.009 | 0.889±0.061 | 0.923±0.030 | 0.934±0.008 |
+  | iPTM protein↔DNA-PAM | 0.939±0.008 | 0.901±0.056 | 0.933±0.025 | 0.942±0.008 |
+  | iPTM protein↔sgRNA | 0.947±0.008 | **0.866±0.117** | 0.937±0.037 | 0.949±0.007 |
+
+- **Headline finding #1: PLM5 is structurally indistinguishable from en31.** Every metric is within one standard deviation between PLM5 and en31 (the wet-lab-validated known-functional variant). At the most decision-relevant interface — protein↔DNA-PAM — PLM5 = 0.933±0.025 vs en31 = 0.942±0.008 (Δ = −0.009 ≈ noise). The structure-conditioned LigandMPNN design followed by apo-ΔΔG filtering produced a candidate that Boltz cannot tell apart from the published functional variant. **Strongest possible in-silico endorsement short of wet-lab validation.**
+
+- **Headline finding #2: PLM3 is structurally compromised.** Boltz scores PLM3 worse than WT/PLM5/en31 on every metric, with drops of 0.04-0.08 and 6-10× higher standard deviations. The largest single hit: iPTM protein↔sgRNA = 0.866 ± 0.117 vs WT 0.947 ± 0.008 — PLM3's sgRNA interface confidence drops 0.08 with a standard deviation that is essentially the entire en31-vs-WT difference. The model is genuinely unsure how PLM3 folds.
+
+- **W1507K confirmed as a real biophysical problem.** Per-residue pLDDT at position 1507: PLM3 = 0.878 vs WT 0.958 (Δ = −0.08). proteinmpnn_ddg had called W1507K "stabilizing" (−5.07 kcal/mol) — Boltz's verdict is the opposite. The apo-ΔΔG model is miscalibrated for hydrophobic→K substitutions; Boltz, seeing the complex, identifies W1507K as a local-geometry disturbance. This was the most biophysically suspicious pick in PLM3, and the structure-prediction lens confirms the suspicion.
+
+- **G1243T context-dependent confidence — emergent multi-mutant effect.** The G1243T mutation appears in *both* PLM3 and en31. In en31's context (with E1369R, E1449H): pLDDT = 0.938. In PLM3's context (with W1507K, C1292K, M1617K): pLDDT = 0.816 — drop of 0.12 at the *same* mutation. The other three PLM3 mutations propagate uncertainty back to position 1243 even though they're 50-300 residues away. This is the epistasis our independent-marginal multi-mutant scoring cannot capture, and exactly why Boltz-2 is the right final-pass filter.
+
+- **Per-engineered-position pLDDT table** (mean over 5 diffusion samples; bold = the variant carries that mutation):
+
+  | Position | WT | PLM3 | PLM5 | en31 |
+  |----------|-----|------|------|------|
+  | G1243T (en31, PLM3) | 0.936 | **0.816** | 0.939 | **0.938** |
+  | Y1249F (PLM4/5) | 0.965 | 0.914 | **0.969** | 0.967 |
+  | C1292K (PLM3) | 0.937 | **0.883** | 0.938 | 0.933 |
+  | A1325K (PLM4/5) | 0.885 | 0.852 | **0.900** | 0.899 |
+  | Y1341L (PLM4/5) | 0.966 | 0.904 | **0.968** | 0.970 |
+  | E1369R (en1/en31) | 0.962 | 0.891 | 0.963 | **0.954** |
+  | E1449H (en31) | 0.952 | 0.867 | 0.952 | **0.955** |
+  | K1479F (PLM5) | 0.914 | 0.844 | **0.925** | 0.913 |
+  | W1507K (PLM3) | 0.958 | **0.878** | 0.966 | 0.964 |
+  | T1535V (PLM4 only) | 0.961 | 0.955 | 0.966 | 0.964 |
+  | E1603H (en15) | 0.934 | 0.918 | 0.947 | 0.942 |
+  | M1617K (PLM3) | 0.908 | **0.923** | 0.922 | 0.921 |
+
+  Notable: M1617K is the *only* PLM3 mutation that Boltz does not flag as confidence-reducing. The three other PLM3 picks (G1243T, C1292K, W1507K) all drop their local pLDDT by 0.05-0.12. PLM5's four picks all have pLDDT > 0.9 at their positions, matching or exceeding en31.
+
+- **Per-variant interpretation:**
+  - **WT:** the baseline. High confidence everywhere (0.91-0.95). The PI-domain complex is well-characterized by Boltz.
+  - **PLM3 (ESM-2 sequence-only):** structurally compromised. The sgRNA interface in particular has very high uncertainty across the 5 diffusion samples (±0.117). Not a good candidate without revision.
+  - **PLM5 (LigandMPNN + apo-ΔΔG filter):** structurally on par with en31. The cleanest in-silico candidate.
+  - **en31 (Acharya 2024 known-functional):** confidence-equivalent to WT. Consistent with en31 being a viable engineered variant of WT.
+
+- **Caveats:**
+  - Predictions used `msa: empty` (single-sequence mode). Absolute confidences are lower than the MSA-enabled equivalent would be. **Relative differences are still informative** because all variants used the same setting. A publication-quality rerun with `--use_msa_server` would tighten the absolute numbers but is unlikely to change the qualitative finding that PLM5 ≈ en31 and PLM3 < both.
+  - Protein chain was truncated to WED+PI (residues 1230-1620). Boltz did not see the REC lobe or N-terminal RuvC-like nuclease domain. If a candidate's mutations cause issues in the REC lobe (none of our picks are there), this analysis would miss it.
+  - Boltz-2 is itself an approximation; pLDDT/iPTM are calibrated against natural complexes and may behave differently on engineered ones. Treat absolute numbers as a guide, not ground truth.

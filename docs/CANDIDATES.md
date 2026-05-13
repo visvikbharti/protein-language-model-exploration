@@ -8,14 +8,14 @@
 
 ## 1. Quick reference — all candidates side by side
 
-| Candidate | Mutations | Source method | ESM-2 cumul. composite | LigandMPNN top_freq min | Cumul. apo ΔΔG (kcal/mol) | In en31 envelope? |
-|-----------|-----------|---------------|------------------------|--------------------------|---------------------------|-------------------|
-| **FnCas9-WT** | (none) | — | 0 | — | 0 | yes (anchor) |
-| **FnCas9-en31** | G1243T / E1369R / E1449H | Acharya 2024 directed evolution | (G1243T rank 1, others Q3) | n/a (not sampled) | **+0.40** | yes (anchor) |
-| **FnCas9-en15** | E1603H | Acharya 2024 | (rank 5,109/7,429, Q3) | n/a | **−1.37** | yes (anchor) |
-| **FnCas9-PLM3** | G1243T / W1507K / C1292K / M1617K | ESM-2 zero-shot | +13.7 | n/a | **−8.42** | "too stable" — outside |
-| **FnCas9-PLM4** | T1535V / Y1249F / Y1341L / A1325K | LigandMPNN | n/a | 0.989 | **+6.74** | ❌ outside (+6 above en31) |
-| **FnCas9-PLM5** | Y1249F / Y1341L / A1325K / K1479F | LigandMPNN + ΔΔG gate | n/a | 0.985 | **+0.59** | ✓ essentially at en31 |
+| Candidate | Mutations | Source method | ESM-2 cumul. composite | LigandMPNN top_freq min | Cumul. apo ΔΔG (kcal/mol) | Boltz iPTM (DNA-PAM) | In en31 envelope? |
+|-----------|-----------|---------------|------------------------|--------------------------|---------------------------|---------------------|-------------------|
+| **FnCas9-WT** | (none) | — | 0 | — | 0 | 0.939±0.008 | yes (anchor) |
+| **FnCas9-en31** | G1243T / E1369R / E1449H | Acharya 2024 directed evolution | (G1243T rank 1, others Q3) | n/a (not sampled) | **+0.40** | **0.942±0.008** | yes (anchor) |
+| **FnCas9-en15** | E1603H | Acharya 2024 | (rank 5,109/7,429, Q3) | n/a | **−1.37** | not run | yes (anchor) |
+| **FnCas9-PLM3** | G1243T / W1507K / C1292K / M1617K | ESM-2 zero-shot | +13.7 | n/a | **−8.42** | **0.901±0.056** ↓ | "too stable" — outside |
+| **FnCas9-PLM4** | T1535V / Y1249F / Y1341L / A1325K | LigandMPNN | n/a | 0.989 | **+6.74** | not run (skipped after gate) | ❌ outside (+6 above en31) |
+| **FnCas9-PLM5** | Y1249F / Y1341L / A1325K / K1479F | LigandMPNN + ΔΔG gate | n/a | 0.985 | **+0.59** | **0.933±0.025** ≈ en31 | ✓ essentially at en31 |
 
 The "en31 envelope" is the calibrated-safe band [−1.4, +0.4] kcal/mol cumulative apo ΔΔG that the two known-functional Acharya 2024 variants occupy.
 
