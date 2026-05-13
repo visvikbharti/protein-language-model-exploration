@@ -6,7 +6,9 @@
 #   bash hpc/sync.sh pull      # HPC -> local Mac
 #   bash hpc/sync.sh push -n   # dry-run
 
-set -euo pipefail
+# NOTE: do NOT use `set -u` here — macOS ships bash 3.2 which throws on
+# empty array expansion (e.g. "${EXTRA_FLAGS[@]}" when no extra args given).
+set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -14,7 +16,11 @@ REMOTE_HOST="${HPC_HOST:-tejas.igib.res.in}"
 REMOTE_USER="${HPC_USER:-vishal.bharti}"
 REMOTE_PATH="${HPC_PATH:-/lustre/vishal.bharti/protein-language-model-exploration}"
 
-EXTRA_FLAGS=("${@:2}")
+# Collect extra rsync flags (anything after the verb). Use shift + "$@" so
+# the array is empty (not undefined) when no flags are given.
+CMD="${1:-}"
+shift 2>/dev/null || true
+EXTRA_FLAGS=("$@")
 
 EXCLUDES=(
     --exclude '.git/'
@@ -34,20 +40,20 @@ EXCLUDES=(
     --exclude '.cache/'
 )
 
-case "${1:-}" in
+case "$CMD" in
     push)
         echo "[sync] $PROJECT_ROOT/  ->  $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/"
-        rsync -avhP "${EXCLUDES[@]}" "${EXTRA_FLAGS[@]}" \
+        rsync -avhP "${EXCLUDES[@]}" ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
             "$PROJECT_ROOT/" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/"
         ;;
     pull)
         echo "[sync] $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/results/  ->  $PROJECT_ROOT/results/"
-        rsync -avhP "${EXTRA_FLAGS[@]}" \
+        rsync -avhP ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
             "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/results/" \
             "$PROJECT_ROOT/results/"
         echo
         echo "[sync] $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/logs/  ->  $PROJECT_ROOT/logs/"
-        rsync -avhP "${EXTRA_FLAGS[@]}" \
+        rsync -avhP ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
             "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/logs/" \
             "$PROJECT_ROOT/logs/" || true
         ;;
