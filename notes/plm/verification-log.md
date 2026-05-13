@@ -99,3 +99,46 @@ Key corrections from drafts:
 3. Protein2PAM "42 N4G PAMs vs 7 for WT" → requires Nat Biotechnol full text.
 4. Original source for an ESM-IF1 1024-aa context limit, if it exists → Hsu et al. 2022 paper.
 5. Independent benchmark of AlphaFold3 / Boltz-2 on Cas9-sgRNA-DNA complexes → field gap, not a verification gap.
+
+---
+
+## In-silico results — first-party data from this project
+
+This section records empirical findings from our own runs (not literature). Each entry is an experiment we can re-run from the recorded scripts, scores, and PDBs in `results/runs/<date>_*/`.
+
+### 2026-05-13 — ESM-2 650M full PI-domain saturation (HPC)
+
+- **Run dir:** `results/runs/2026-05-13_esm2_650M_full_PI_hpc/`
+- **Reproduces with:** `hpc/slurm/01_esm2_650m_full_PI.sbatch` on CSIR-IGIB tejas DGX, V100-SXM2-32GB.
+- **Setup:** ESM-2 t33 650M (HuggingFace `facebook/esm2_t33_650M_UR50D`), mask-marginal LLR, residues 1230–1620 (WED + PI; 391 positions × 19 substitutions = 7,429 variants).
+- **Runtime:** ~3 min wall on V100 (compared to ~12 min CPU on the prior 84-position subset).
+- **Sanity-check rank of known beneficial mutations in the 7,429-variant pool (composite = LLR − 1.0 × class_conservation):**
+
+  | Mutation | Composite rank | Quartile | Interpretation |
+  |----------|----------------|----------|----------------|
+  | G1243T (en31, WED) | **1 / 7,429** | top | sequence-only model strongly recovers this WED-domain mutation |
+  | E1369R (en1 / en31, PI) | 4,956 / 7,429 | Q3 | dispreferred — below median |
+  | E1449H (en31, PI) | 5,117 / 7,429 | Q3 | dispreferred — below median |
+  | E1603H (en15, PI) | 5,109 / 7,429 | Q3 | dispreferred — below median |
+
+- **Headline finding (NEW EMPIRICAL CLAIM, supersedes the Phase 2 hotspot-windows result):** sequence-only ESM-2 650M zero-shot CANNOT recover the three E→R / E→H PAM-contact mutations that the Acharya 2024 enFnCas9 paper engineered. All three sit in the bottom half of the 7,429-variant PI-domain pool, i.e. the model thinks they are worse than wild-type. Only G1243T — a WED-domain mutation away from the DNA-contact surface — is recovered, and it tops the entire ranked list. This is consistent with the expected blind spot: ESM-2 has no representation of DNA, so it cannot see that E1369 / E1449 / E1603 sidechains are too negatively charged for their phosphate-backbone neighbours. This is the cleanest empirical demonstration to date (in this project) of the sequence-only PLM capability ceiling on PAM-relaxation engineering, and the motivation for moving to structure-and-ligand-conditioned LigandMPNN.
+
+### 2026-05-13 — FnCas9-PLM3 candidate (HPC)
+
+- **Run dir:** `results/runs/2026-05-13_candidates_v3/`
+- **Reproduces with:** `scripts/build_candidate_v3.py --scores <esm2_run>/scores.tsv --top-k 4 --max-class-conservation 0.5 --min-spacing 5`
+- **Selection rule:** top-K under composite = LLR − 1.0 × class_conservation, gated on (class_conservation < 0.5, LLR > 0, positions ≥ 5 residues apart). Full PI design space, no hot-spot windows.
+- **Mutations:** `G1243T / W1507K / C1292K / M1617K`
+- **Per-mutation scores:**
+
+  | Variant | LLR | class_cons | Composite |
+  |---------|-----|-----------|-----------|
+  | G1243T | +4.436 | 0.33 | +4.103 |
+  | W1507K | +3.308 | 0.00 | +3.308 |
+  | C1292K | +3.100 | 0.00 | +3.100 |
+  | M1617K | +3.057 | 0.00 | +3.057 |
+
+- **Notes / hypotheses (NOT verified):**
+  - Three of the four picks are hydrophobic-to-K swaps in the PI domain. Biophysically plausible (PI domain contacts the negatively-charged DNA backbone), but could also reflect ESM-2's known rare-amino-acid bias. Wet-lab activity testing would discriminate; structural prediction (Boltz-2, planned in `04_boltz_complex.sbatch`) is a cheaper intermediate filter.
+  - G1243T overlap with en31 is a real positive control success — the same exact substitution was independently recovered from a 7,429-variant pool.
+  - Class-conservation gate rejected the high-LLR-but-class-non-conserved picks from the older 84-position run (W1459K class_cons=1.00, R1367L class_cons=0.50).

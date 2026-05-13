@@ -49,6 +49,35 @@ if [[ ! -d "$LIGANDMPNN_DIR/model_params" ]]; then
     cd -
 fi
 
+# Install LigandMPNN's Python deps that aren't already in our venv.
+# DO NOT use their requirements.txt directly — it pins torch==2.2.1 (cu12),
+# numpy==1.23.5, scipy==1.12.0, which would clobber our cu118 stack.
+# Only the LigandMPNN-specific packages are needed; torch/numpy/scipy/biopython
+# are already provided by setup_env.sh and are compatible.
+if [[ ! -f "$LIGANDMPNN_DIR/.deps_installed" ]]; then
+    echo "[setup] Installing LigandMPNN-specific deps (ProDy, ml-collections, dm-tree)..."
+    pip install --prefer-binary 'ProDy>=2.4,<3' 'ml-collections>=0.1.1' 'dm-tree>=0.1.8'
+    touch "$LIGANDMPNN_DIR/.deps_installed"
+fi
+
+# Patch vendored openfold for NumPy 2.x: it uses np.int / np.float / np.bool
+# which were removed in NumPy 1.24. Downgrading numpy would break the rest of
+# the venv (ESM-2 et al. already validated at numpy 2.x), so we rewrite the
+# aliases in place. \b word-boundary protects np.int_ / np.float64 etc.
+if [[ ! -f "$LIGANDMPNN_DIR/.numpy2_patched" ]]; then
+    echo "[setup] Patching vendored openfold for NumPy 2.x compatibility..."
+    find "$LIGANDMPNN_DIR/openfold" -name '*.py' -exec sed -i -E \
+        -e 's/\bnp\.int\b/int/g' \
+        -e 's/\bnp\.float\b/float/g' \
+        -e 's/\bnp\.bool\b/bool/g' \
+        -e 's/\bnp\.object\b/object/g' \
+        -e 's/\bnp\.str\b/str/g' \
+        -e 's/\bnp\.long\b/int/g' \
+        -e 's/\bnp\.unicode\b/str/g' \
+        {} +
+    touch "$LIGANDMPNN_DIR/.numpy2_patched"
+fi
+
 # Validate input PDB
 INPUT_PDB="data/raw/5B2O.pdb"
 if [[ ! -f "$INPUT_PDB" ]]; then
