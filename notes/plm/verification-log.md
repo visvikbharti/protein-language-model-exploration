@@ -142,3 +142,42 @@ This section records empirical findings from our own runs (not literature). Each
   - Three of the four picks are hydrophobic-to-K swaps in the PI domain. Biophysically plausible (PI domain contacts the negatively-charged DNA backbone), but could also reflect ESM-2's known rare-amino-acid bias. Wet-lab activity testing would discriminate; structural prediction (Boltz-2, planned in `04_boltz_complex.sbatch`) is a cheaper intermediate filter.
   - G1243T overlap with en31 is a real positive control success — the same exact substitution was independently recovered from a 7,429-variant pool.
   - Class-conservation gate rejected the high-LLR-but-class-non-conserved picks from the older 84-position run (W1459K class_cons=1.00, R1367L class_cons=0.50).
+
+### 2026-05-13 — LigandMPNN structure+ligand-conditioned design (HPC)
+
+- **Run dir:** `results/runs/2026-05-13_ligandmpnn_PI/`
+- **Reproduces with:** `hpc/slurm/02_ligandmpnn_sampling.sbatch` (DGX V100, ~28 min wall for 1,600 samples × 3 temperatures × 1 model checkpoint `ligandmpnn_v_32_010_25.pt`).
+- **Aggregator:** `scripts/ligandmpnn_aggregate.py` produces `aggregate.tsv` (per-position aa frequencies pooled over 4,800 samples).
+- **Setup:** LigandMPNN with PDB 5B2O (chain A protein + B/C sgRNA/DNA as ligand context), 391 design positions = full WED+PI (1230-1620). Three temperatures: 0.1, 0.2, 0.3. Total 4,800 samples.
+- **Gotchas hit and resolved:**
+  - LigandMPNN CLI requires SPACE-SEPARATED residue tokens (`"A1230 A1231 ..."`); the range form `"A1230-A1620"` is silently rejected (job 214059 produced 1,600 identical-to-WT samples per temperature with `seq_rec=nan` — wasted run, preserved as `_FAILED_no_design`).
+  - LigandMPNN vendored openfold uses NumPy < 1.24 deprecated aliases (`np.int`, `np.float` etc.); patched in-place via sed (NumPy downgrade would break our ESM-2 venv).
+  - LigandMPNN's `requirements.txt` pins `torch==2.2.1 (cu12)`, `numpy==1.23.5`, `scipy==1.12.0` — DO NOT install. Only install ProDy + ml-collections + dm-tree separately.
+
+- **Headline finding (NEW): Structure-conditioned LigandMPNN partially recovers PAM-contact biophysics where sequence-only ESM-2 fails.** Direct head-to-head at the four Acharya 2024 reference positions:
+
+  | Position | WT | en target | ESM-2 broad-pool rank | LigandMPNN top non-WT pick | LigandMPNN target_freq | LigandMPNN WT_freq |
+  |----------|----|----------|------------------------|----------------------------|-------------------------|---------------------|
+  | 1243 (WED) | G | T | **1 / 7429** ✓ | **T=0.455, S=0.456** (tied) | 0.455 | 0.087 |
+  | 1369 (PI) | E | R | 4956 / 7429 (Q3) | **K=0.522** (R=0.365 runner-up) | 0.365 | 0.000 |
+  | 1449 (PI) | E | H | 5117 / 7429 (Q3) | **L=0.985** | 0.000 | 0.001 |
+  | 1603 (PI) | E | H | 5109 / 7429 (Q3) | **L=0.517** | 0.000 | 0.026 |
+
+  - At 1369, LigandMPNN strongly wants to change away from E (WT_freq=0.000) and prefers a basic residue (K or R) — exactly matching Acharya's biophysical rationale that the PAM-contact region needs to flip from acidic to basic. ESM-2 (sequence-only) ranked R at 4956/7429 (worse than WT). This is direct empirical evidence that ligand context fixes a real PLM blind spot for DNA-contact engineering.
+  - At 1449/1603, both models DISAGREE with Acharya: ESM-2 says "leave as E", LigandMPNN says "change to L (hydrophobic)". H is essentially never sampled (0.000). Either Acharya's H mutations are functionally optimal for reasons neither in-silico method captures (epistasis, kinetics, off-target trade-offs) or the experimentally-evolved H is a structural compromise. Falsifiable prediction: a single-point E1449L and E1603L should be designed and compared to E1449H / E1603H if wet-lab work proceeds.
+
+- **PLM4 selection** — `T1535V / Y1249F / Y1341L / A1325K` (run dir: `results/runs/2026-05-13_candidates_v4/`)
+- **PLM3 vs PLM4 — zero overlap:**
+
+  | | PLM3 (ESM-2 sequence-only) | PLM4 (LigandMPNN structure+ligand) |
+  |---|--------------------------|------------------------------------|
+  | Picks | G1243T, W1507K, C1292K, M1617K | T1535V, Y1249F, Y1341L, A1325K |
+  | X→K count | 3 / 4 | 1 / 4 |
+  | Confidence proxy | LLR (sequence-only) | top_freq pooled (1.000, 1.000, 0.996, 0.989) |
+
+  PLM4 has substantially less hydrophobic-to-K bias than PLM3, consistent with LigandMPNN being less affected by the rare-AA-bias artefact that has been observed in ESM-2 zero-shot scoring.
+
+- **Caveats:**
+  - LigandMPNN sampling is autoregressive (one residue at a time conditioned on partial sequence). Per-position frequencies computed across independent samples therefore inherit decode consistency rather than reflecting true per-position posteriors. Frequencies near 1.000 at well-determined positions should be read as "very confident in this assignment given the rest of the design", not as "no other amino acid is plausible". This caveat is relevant for the 1449 L=0.985 finding in particular.
+  - 159 / 391 design positions have a top-pick different from WT — extensive sequence drift from WT, which proteinMPNN-DDG should filter for stability.
+  - No experimental validation. Filing as "in-silico prediction" pending stability filter (proteinmpnn_ddg) and structural validation (Boltz-2 complex prediction) downstream.
