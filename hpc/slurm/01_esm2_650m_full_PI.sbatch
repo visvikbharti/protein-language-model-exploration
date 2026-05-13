@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #SBATCH --job-name=esm2_650m_PI
 #SBATCH --partition=dgx
 #SBATCH --gres=gpu:1

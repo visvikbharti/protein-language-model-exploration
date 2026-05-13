@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #SBATCH --job-name=boltz_complex
 #SBATCH --partition=dgx
 #SBATCH --gres=gpu:1

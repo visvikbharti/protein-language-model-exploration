@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #SBATCH --job-name=proteinmpnn_ddg
 #SBATCH --partition=dgx
 #SBATCH --gres=gpu:1
