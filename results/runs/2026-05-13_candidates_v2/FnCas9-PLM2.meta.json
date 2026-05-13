@@ -1,0 +1,40 @@
+{
+  "candidate_name": "FnCas9-PLM2",
+  "mutations": "G1243T/R1370K/R1456I/G1606D",
+  "lambda_class_cons": 1.0,
+  "lambda_calibration": "failed",
+  "max_class_conservation_filter": 0.5,
+  "require_positive_llr": true,
+  "selection_details": [
+    {
+      "window": "WED_PLL_G1243",
+      "variant": "G1243T",
+      "llr": 4.43614,
+      "class_conservation": 0.3333333333333333,
+      "composite": 4.102806666666667
+    },
+    {
+      "window": "PI_E1369",
+      "variant": "R1370K",
+      "llr": 1.380803,
+      "class_conservation": 0.25,
+      "composite": 1.130803
+    },
+    {
+      "window": "PI_E1449",
+      "variant": "R1456I",
+      "llr": 1.385898,
+      "class_conservation": 0.0,
+      "composite": 1.385898
+    },
+    {
+      "window": "PI_WED_E1603",
+      "variant": "G1606D",
+      "llr": 1.389151,
+      "class_conservation": 0.25,
+      "composite": 1.139151
+    }
+  ],
+  "source_scan": "2026-05-13_esm_saturation_650M",
+  "built_at_utc": "2026-05-13T05:50:27.679140+00:00"
+}

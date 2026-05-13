@@ -1,0 +1,9 @@
+site_label	fncas9_pos	fncas9_residue	id_cons	class_cons	SpCas9_residue	SpCas9_pos	SaCas9_residue	SaCas9_pos	Nme1Cas9_residue	Nme1Cas9_pos	CjCas9_residue	CjCas9_pos
+G1243T  (PLM2)	1243	G	0.25	0.33	N	1041	-	-	G	755	K	769
+R1370K  (PLM2)	1370	R	0.00	0.25	K	1151	E	825	G	856	E	806
+R1456I  (PLM2)	1456	R	0.00	0.00	A	1239	P	911	T	931	-	-
+G1606D  (PLM2)	1606	G	0.25	0.25	G	1354	D	1033	Q	1062	V	959
+G1243T  (en31, WED-PLL)	1243	G	0.25	0.33	N	1041	-	-	G	755	K	769
+E1369R  (en1+en31, PI PAM)	1369	E	0.50	0.50	E	1150	P	824	E	855	K	805
+E1449H  (en31, PI PAM)	1449	E	0.00	0.33	Y	1232	K	903	-	-	D	853
+E1603H  (en15, PI/WED)	1603	E	0.00	0.00	S	1351	Y	1030	Q	1059	N	956

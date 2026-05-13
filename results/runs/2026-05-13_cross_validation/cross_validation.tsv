@@ -1,0 +1,17 @@
+category	variant	wt	mut	pos	llr_35M	rank_35M_at_pos	llr_650M	rank_650M_at_pos	id_conservation	class_conservation	rationale
+POSITIVE	G1243T	G	T	1243	-0.172	13	4.436	1	0.250	0.333	en31, WED-PLL (functional, +cleavage)
+POSITIVE	E1369R	E	R	1369	-0.811	12	-1.159	13	0.500	0.500	en1+en31, PI PAM (functional, expanded PAM)
+POSITIVE	E1449H	E	H	1449	-1.600	16	-1.396	15	0.000	0.333	en31, PI PAM (functional, PAM stabilisation)
+POSITIVE	E1603H	E	H	1603	-1.562	16	-1.724	16	0.000	0.000	en15, PI/WED (functional, single-mutation variant)
+NEGATIVE	E1369A	E	A	1369	-0.815	13	-0.899	8	0.500	0.500	loss of PAM-contact charge
+NEGATIVE	E1369K	E	K	1369	0.400	1	0.261	1	0.500	0.500	PAM-contact charge reversal (E→K, unlike en31's E→R)
+NEGATIVE	R1367E	R	E	1367	0.704	8	0.713	7	0.000	0.500	reverse PI conserved positive charge
+NEGATIVE	W1459A	W	A	1459	1.760	13	2.723	10	0.250	1.000	loss of conserved aromatic at RNA contact
+NEGATIVE	W1459G	W	G	1459	1.855	12	2.781	9	0.250	1.000	extreme loss of conserved aromatic at RNA contact
+NEGATIVE	L1450G	L	G	1450		-1		-1	0.000	0.000	Gly in PI helix (presumed structured)
+NEGATIVE	V1366G	V	G	1366		-1		-1	0.250	0.500	Gly at conserved residue near PAM contact
+NEGATIVE	K1370P	K	P	1370		-1		-1	0.000	0.250	Pro after PAM-contact E1369
+NEUTRAL	S1242T	S	T	1242		-1		-1	0.500	0.667	conservative S→T
+NEUTRAL	K1244R	K	R	1244		-1		-1	0.500	0.667	conservative K→R (same charge class)
+NEUTRAL	N1448D	N	D	1448	-0.071	6	-0.141	6	0.250	0.333	conservative N→D (similar polarity)
+NEUTRAL	T1607S	T	S	1607		-1		-1	0.250	0.250	conservative T→S

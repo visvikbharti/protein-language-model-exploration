@@ -184,14 +184,17 @@ def main() -> int:
             f.write(e.name + "\t" + "\t".join(str(aligned_len[i][j]) for j in range(n)) + "\n")
     log.info("Wrote %s", al_tsv)
 
-    # Compact summary
-    log.info("\n=== Identity vs FnCas9-PLM1 ===")
-    plm1_idx = next(i for i, e in enumerate(entries) if e.name == "FnCas9-PLM1")
+    # Compact summary: pick the first entry whose name starts with "FnCas9-PLM"
+    plm_candidate = next(
+        (i for i, e in enumerate(entries) if e.name.startswith("FnCas9-PLM")),
+        0,
+    )
+    log.info("\n=== Identity vs %s ===", entries[plm_candidate].name)
     for j in range(n):
-        if j == plm1_idx:
+        if j == plm_candidate:
             continue
         log.info("  %-15s   identity=%5.2f%%   similarity=%5.2f%%",
-                 entries[j].name, identity[plm1_idx][j], similarity[plm1_idx][j])
+                 entries[j].name, identity[plm_candidate][j], similarity[plm_candidate][j])
 
     return 0
 
