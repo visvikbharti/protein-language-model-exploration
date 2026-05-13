@@ -17,11 +17,16 @@
 #
 # Expected time on V100 32GB: ~1-2 hours for 5,000 samples × 3 temps.
 
-set -euo pipefail
+set -eo pipefail
 mkdir -p logs results external
 
-module purge
-module load python-3.12.2
+# Initialise the modules system (SLURM jobs don't source ~/.bashrc).
+if [ -f /etc/profile.d/modules.sh ]; then
+    source /etc/profile.d/modules.sh
+elif [ -f /usr/share/Modules/init/bash ]; then
+    source /usr/share/Modules/init/bash
+fi
+command -v module >/dev/null && module purge || true
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
 source .venv-hpc/bin/activate

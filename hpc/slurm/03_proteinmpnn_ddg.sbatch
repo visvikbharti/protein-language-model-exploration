@@ -16,12 +16,19 @@
 #
 # Time on V100: ~10-30 min depending on PDB size.
 
-set -euo pipefail
+set -eo pipefail
 mkdir -p logs results external/proteinmpnn_ddg
 
-module purge
-module load python-3.12.2
-module load singularity-3.7.4
+# Initialise the modules system (SLURM jobs don't source ~/.bashrc).
+if [ -f /etc/profile.d/modules.sh ]; then
+    source /etc/profile.d/modules.sh
+elif [ -f /usr/share/Modules/init/bash ]; then
+    source /usr/share/Modules/init/bash
+fi
+if command -v module >/dev/null; then
+    module purge || true
+    module load singularity-3.7.4 || echo "[warn] could not load singularity module"
+fi
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
 

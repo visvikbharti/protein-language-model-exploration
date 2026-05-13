@@ -15,13 +15,22 @@
 # Watch:    squeue -u $USER
 # Read:     cat logs/00_smoke_<jobid>.out
 
-set -euo pipefail
+set -eo pipefail
 
 mkdir -p logs
 
-# Load Python module (no cuda module needed — PyTorch wheels carry CUDA runtime)
-module purge
-module load python-3.12.2
+# Initialise the environment-modules system. SLURM jobs don't source ~/.bashrc
+# so `module` isn't on PATH by default; we have to source the init script first.
+# We also don't actually need a Python module on this cluster — the venv we
+# created with miniconda's python3.11 is fully self-contained.
+if [ -f /etc/profile.d/modules.sh ]; then
+    source /etc/profile.d/modules.sh
+elif [ -f /usr/share/Modules/init/bash ]; then
+    source /usr/share/Modules/init/bash
+fi
+# The venv already pins python3.11.10 from miniconda; module load is optional.
+# If `module` is available, purge anything we might inherit:
+command -v module >/dev/null && module purge || true
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
 source .venv-hpc/bin/activate

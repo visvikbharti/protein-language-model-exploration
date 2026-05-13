@@ -15,11 +15,16 @@
 # the 84-position subset). The bigger position set covers all of the PAM-
 # interacting region rather than just the four enFnCas9 hotspots.
 
-set -euo pipefail
+set -eo pipefail
 mkdir -p logs results
 
-module purge
-module load python-3.12.2
+# Initialise the modules system (SLURM jobs don't source ~/.bashrc).
+if [ -f /etc/profile.d/modules.sh ]; then
+    source /etc/profile.d/modules.sh
+elif [ -f /usr/share/Modules/init/bash ]; then
+    source /usr/share/Modules/init/bash
+fi
+command -v module >/dev/null && module purge || true
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
 source .venv-hpc/bin/activate
