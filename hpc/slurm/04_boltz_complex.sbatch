@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=03:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=logs/04_boltz_%j.out
 #SBATCH --error=logs/04_boltz_%j.err
 
@@ -51,36 +51,45 @@ mkdir -p "$OUTPUT_DIR"
 #   - FnCas9-en31 + same sgRNA + same DNA
 # YAML format docs: https://github.com/jwohlwend/boltz
 
-CONFIG_YAML="hpc/inputs/boltz_fncas9_plm2.yaml"
-if [[ ! -f "$CONFIG_YAML" ]]; then
-    echo "[error] Missing $CONFIG_YAML — see hpc/inputs/README.md for the template."
-    exit 1
-fi
+# Variants to predict — generate the YAMLs via scripts/prepare_boltz_yamls.py
+# if they don't already exist.
+VARIANTS=(
+    "fncas9_wt"
+    "fncas9_plm3"
+    "fncas9_plm5"
+    "fncas9_en31"
+)
 
-echo "===== Boltz-2 complex prediction ====="
-echo "Config: $CONFIG_YAML"
-echo "Output dir: $OUTPUT_DIR"
-echo
+# Regenerate YAMLs each run (cheap, ~1 sec) so they stay in sync with the
+# latest candidate definitions. Idempotent — overwrites.
+echo "[setup] Generating Boltz input YAMLs..."
+PYTHONPATH=src python scripts/prepare_boltz_yamls.py
 
-# Use fp16 (V100 doesn't have bfloat16); see Boltz CLI flags
-boltz predict "$CONFIG_YAML" \
-    --out_dir "$OUTPUT_DIR" \
-    --use_msa_server 1 \
-    --diffusion_samples 5 \
-    || {
-        echo
-        echo "[fallback] Full-length prediction failed (probably OOM)."
-        echo "Trying domain-only fallback..."
-        DOMAIN_YAML="hpc/inputs/boltz_fncas9_plm2_PI_domain.yaml"
-        if [[ -f "$DOMAIN_YAML" ]]; then
-            boltz predict "$DOMAIN_YAML" \
-                --out_dir "$OUTPUT_DIR/PI_only" \
-                --diffusion_samples 5
-        else
-            echo "[error] No domain-only fallback YAML at $DOMAIN_YAML"
-            exit 1
-        fi
-    }
+# Loop over variants. On V100 32GB, each full-length FnCas9 + sgRNA + DNA
+# prediction takes ~30-60 min with 5 diffusion samples. With 4 variants
+# we need >4 hours wall (hence --time=06:00:00).
+for SLUG in "${VARIANTS[@]}"; do
+    CONFIG_YAML="hpc/inputs/boltz_${SLUG}.yaml"
+    if [[ ! -f "$CONFIG_YAML" ]]; then
+        echo "[error] Missing $CONFIG_YAML"
+        exit 1
+    fi
+    VAR_OUT="$OUTPUT_DIR/$SLUG"
+    mkdir -p "$VAR_OUT"
+    echo
+    echo "===== Boltz-2 prediction: $SLUG ====="
+    echo "Config: $CONFIG_YAML"
+    echo "Output: $VAR_OUT"
+    echo
+
+    boltz predict "$CONFIG_YAML" \
+        --out_dir "$VAR_OUT" \
+        --use_msa_server \
+        --diffusion_samples 5 \
+        || {
+            echo "[warn] $SLUG full-length prediction failed. Continuing with next variant."
+        }
+done
 
 echo
 echo "===== Done ====="
