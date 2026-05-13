@@ -96,10 +96,16 @@ echo "Output dir: $OUTPUT_DIR"
 echo "LigandMPNN dir: $LIGANDMPNN_DIR"
 echo
 
-# PI-domain residues to design (mask) — same as our Phase 2 hotspots, but extended
-# to the full PI region. LigandMPNN expects 1-indexed residue ranges with chain ID.
-# 5B2O chain A is the protein; B/C are sgRNA/DNA in some PDB conventions — verify.
-DESIGN_RESIDUES="A1230-A1620"
+# PI-domain residues to design — full WED+PI region 1230-1620.
+# LigandMPNN's CLI expects SPACE-SEPARATED tokens "A1230 A1231 ..." — passing a
+# range like "A1230-A1620" is silently rejected (0 positions designed, all
+# 1,600 samples come back identical to the PDB sequence; see job 214059).
+# 5B2O chain A uses UniProt numbering directly; all 391 positions in
+# 1230-1620 are resolved (verified against 5B2O ATOM records, 2026-05-13).
+DESIGN_RESIDUES=$(python3 -c "print(' '.join(f'A{i}' for i in range(1230, 1621)))")
+N_DESIGN_TOKENS=$(echo "$DESIGN_RESIDUES" | wc -w)
+echo "Design residues: $N_DESIGN_TOKENS tokens (first=$(echo $DESIGN_RESIDUES | awk '{print $1}'), last=$(echo $DESIGN_RESIDUES | awk '{print $NF}'))"
+echo
 
 for TEMP in 0.1 0.2 0.3; do
     echo ">> Sampling at temperature $TEMP"
