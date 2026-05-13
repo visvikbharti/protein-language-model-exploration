@@ -15,19 +15,22 @@
 # the 84-position subset). The bigger position set covers all of the PAM-
 # interacting region rather than just the four enFnCas9 hotspots.
 
+# Bootstrap PATH — dgx compute node has empty PATH for SLURM jobs.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}
+
 set -eo pipefail
 mkdir -p logs results
 
 # Initialise the modules system (SLURM jobs don't source ~/.bashrc).
 if [ -f /etc/profile.d/modules.sh ]; then
-    source /etc/profile.d/modules.sh
+    . /etc/profile.d/modules.sh
 elif [ -f /usr/share/Modules/init/bash ]; then
-    source /usr/share/Modules/init/bash
+    . /usr/share/Modules/init/bash
 fi
-command -v module >/dev/null && module purge || true
+command -v module >/dev/null 2>&1 && module purge || true
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
-source .venv-hpc/bin/activate
+. .venv-hpc/bin/activate
 
 DATE=$(date -u +%Y-%m-%d)
 OUTPUT_DIR="results/runs/${DATE}_esm2_650M_full_PI_hpc"

@@ -16,18 +16,21 @@
 #
 # Time on V100: ~10-30 min depending on PDB size.
 
+# Bootstrap PATH — dgx compute node has empty PATH for SLURM jobs.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}
+
 set -eo pipefail
 mkdir -p logs results external/proteinmpnn_ddg
 
 # Initialise the modules system (SLURM jobs don't source ~/.bashrc).
 if [ -f /etc/profile.d/modules.sh ]; then
-    source /etc/profile.d/modules.sh
+    . /etc/profile.d/modules.sh
 elif [ -f /usr/share/Modules/init/bash ]; then
-    source /usr/share/Modules/init/bash
+    . /usr/share/Modules/init/bash
 fi
-if command -v module >/dev/null; then
+if command -v module >/dev/null 2>&1; then
     module purge || true
-    module load singularity-3.7.4 || echo "[warn] could not load singularity module"
+    module load singularity-3.7.4 || /bin/echo "[warn] could not load singularity module"
 fi
 
 cd /lustre/vishal.bharti/protein-language-model-exploration

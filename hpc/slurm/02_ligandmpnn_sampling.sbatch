@@ -17,19 +17,22 @@
 #
 # Expected time on V100 32GB: ~1-2 hours for 5,000 samples × 3 temps.
 
+# Bootstrap PATH — dgx compute node has empty PATH for SLURM jobs.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}
+
 set -eo pipefail
 mkdir -p logs results external
 
 # Initialise the modules system (SLURM jobs don't source ~/.bashrc).
 if [ -f /etc/profile.d/modules.sh ]; then
-    source /etc/profile.d/modules.sh
+    . /etc/profile.d/modules.sh
 elif [ -f /usr/share/Modules/init/bash ]; then
-    source /usr/share/Modules/init/bash
+    . /usr/share/Modules/init/bash
 fi
-command -v module >/dev/null && module purge || true
+command -v module >/dev/null 2>&1 && module purge || true
 
 cd /lustre/vishal.bharti/protein-language-model-exploration
-source .venv-hpc/bin/activate
+. .venv-hpc/bin/activate
 
 # Clone the LigandMPNN repo if not already present (~/external/LigandMPNN)
 LIGANDMPNN_DIR="$PWD/external/LigandMPNN"
