@@ -181,3 +181,40 @@ This section records empirical findings from our own runs (not literature). Each
   - LigandMPNN sampling is autoregressive (one residue at a time conditioned on partial sequence). Per-position frequencies computed across independent samples therefore inherit decode consistency rather than reflecting true per-position posteriors. Frequencies near 1.000 at well-determined positions should be read as "very confident in this assignment given the rest of the design", not as "no other amino acid is plausible". This caveat is relevant for the 1449 L=0.985 finding in particular.
   - 159 / 391 design positions have a top-pick different from WT — extensive sequence drift from WT, which proteinMPNN-DDG should filter for stability.
   - No experimental validation. Filing as "in-silico prediction" pending stability filter (proteinmpnn_ddg) and structural validation (Boltz-2 complex prediction) downstream.
+
+### 2026-05-13 — proteinmpnn_ddg apo-stability filter
+
+- **Run dir:** `results/runs/2026-05-13_proteinmpnn_ddg/`
+- **Reproduces with:** `hpc/slurm/03_proteinmpnn_ddg.sbatch` (peptoneltd/proteinmpnn_ddg `1.0.0_base` Singularity container, model `v_48_020`, full-chain saturation over 5B2O chain A, ~30 sec wall on V100 after first-time image pull).
+- **Analyzer:** `scripts/proteinmpnn_ddg_analyze.py` (peptoneltd LONG format: `pre, post, pos, logit_difference, logit_difference_ddg`).
+
+- **What this measures (and what it doesn't):** proteinmpnn_ddg evaluates ΔΔG on the *apo* protein structure. It does NOT see the sgRNA or DNA. A `+ΔΔG` for a DNA-contact charge swap therefore reflects destabilization of the apo state, not destabilization of the functional complex. The Acharya 2024 en31/en15 wet-lab data are essential as calibration anchors.
+
+- **Calibration anchors (Acharya 2024 known-functional variants):**
+
+  | Variant | Mutations | Cumulative ΔΔG (apo) |
+  |---------|-----------|---------------------|
+  | en31 (G1243T/E1369R/E1449H) | G1243T = −2.65, E1369R = +3.20, E1449H = −0.15 | **+0.40 kcal/mol** |
+  | en15 (E1603H) | E1603H = −1.37 | **−1.37 kcal/mol** |
+
+  Functional engineered variants tolerate single-position apo ΔΔG up to at least +3.20 kcal/mol (E1369R in en31), and cumulative apo ΔΔG in the range [−1.4, +0.4]. Anything in that band is calibrated-safe; anything outside is extrapolation.
+
+- **PLM3 (sequence-only ESM-2): cumulative ΔΔG = −8.42 kcal/mol** — far below the en15 anchor. Reads as "much more stable than wild-type". Two interpretations: (a) genuinely well-folded mutant, (b) proteinmpnn_ddg miscalibration for hydrophobic-to-K substitutions. The W1507K = −5.07 kcal/mol stabilization is biophysically suspicious (W→K removes an aromatic; would normally cost stability). Flagging for follow-up but not rejecting.
+
+  | Variant | ΔΔG | Call |
+  |---------|-----|------|
+  | G1243T | −2.65 | stabilizing |
+  | W1507K | −5.07 | stabilizing (suspicious — see above) |
+  | C1292K | −3.63 | stabilizing |
+  | M1617K | +2.93 | moderate destabilizer |
+
+- **PLM4 (LigandMPNN structure+ligand): cumulative ΔΔG = +6.74 kcal/mol** — **6.3 kcal/mol above the en31 functional anchor**. T1535V alone contributes +4.15 (above any single-position cost in either functional reference variant). This is a real concern, not an artefact. The tension is informative: LigandMPNN sampled T→V at position 1535 with pooled frequency 1.000 (perfectly confident *in the complex*), while proteinmpnn_ddg says T1535 is a hydrogen-bonding hub for the apo fold. The two structure-aware models are conditioning on different reference states, and they disagree at exactly this position.
+
+  | Variant | ΔΔG | Call |
+  |---------|-----|------|
+  | T1535V | +4.15 | STRONG destabilizer — outside calibrated envelope |
+  | Y1249F | −0.98 | stabilizing |
+  | Y1341L | +1.78 | moderate destabilizer |
+  | A1325K | +1.79 | moderate destabilizer |
+
+- **Action item:** Rebuild a stability-filtered v5 candidate that adds a `--max-single-ddg` gate (drop any single mutation with ΔΔG > some threshold, e.g. +3.20 = en31's worst single-position cost) on top of the existing LigandMPNN selection logic. PLM5 would replace T1535V with the next-best LigandMPNN candidate satisfying both filters.
