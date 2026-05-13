@@ -23,8 +23,8 @@ dependencies = [
     "transformers>=4.40",
     "accelerate>=0.30",
 
-    # ESM-2 via fair-esm (lightweight, deterministic)
-    "fair-esm>=2.0.1",
+    # ESM-2 via fair-esm (lightweight, deterministic). Latest on PyPI is 2.0.0.
+    "fair-esm>=2.0.0",
 
     # Plotting and reporting
     "matplotlib>=3.8",

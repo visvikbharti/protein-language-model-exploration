@@ -66,7 +66,7 @@ pip install --prefer-binary \
     "biopython>=1.83" \
     "transformers>=4.40" \
     "accelerate>=0.30" \
-    "fair-esm>=2.0.1" \
+    "fair-esm>=2.0.0" \
     "matplotlib>=3.8" \
     "seaborn>=0.13" \
     "tqdm>=4.66" \
