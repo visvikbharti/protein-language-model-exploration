@@ -48,11 +48,18 @@ pip install --extra-index-url https://download.pytorch.org/whl/cu118 \
     "torchaudio>=2.1"
 
 echo "[setup] Installing protein ML stack..."
-pip install \
-    "numpy>=1.26" \
-    "scipy>=1.11" \
-    "pandas>=2.1" \
-    "pyarrow>=14" \
+# --prefer-binary tells pip to prefer wheels over source tarballs even when a
+# newer source-only release exists. Without this flag, pip happily picked
+# scipy 1.17.1 source and tried to build it with the HPC's GCC 8.4, which
+# fails because the modern numpy build chain requires GCC >= 9.3.
+#
+# scipy is pinned <1.17 to stay in the wheel-shipping range for cp311 on
+# manylinux2014. Same logic for pyarrow.
+pip install --prefer-binary \
+    "numpy>=1.26,<2.3" \
+    "scipy>=1.11,<1.17" \
+    "pandas>=2.1,<2.3" \
+    "pyarrow>=14,<20" \
     "pydantic>=2.5" \
     "pyyaml>=6" \
     "biotite>=0.40" \
