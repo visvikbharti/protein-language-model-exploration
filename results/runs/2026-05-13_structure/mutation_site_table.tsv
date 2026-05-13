@@ -1,0 +1,9 @@
+pos	wt_resname	domain	sasa_A2	n_heavy_neighbors_6A	n_residues_6A_of_CA	nearest_DNA_A	nearest_RNA_A	is_en31_site	is_en15_site	is_plm1_site
+1236	HIS	WED	91.6	18	4	16.14	3.7	False	False	True
+1243	GLY	WED	28.2	25	5	3.65	4.91	True	False	False
+1367	ARG	PI	40.7	40	10	9.13	8.42	False	False	True
+1369	GLU	PI	49.5	33	10	8.77	3.4	True	False	False
+1449	GLU	PI	64.5	32	7	7.0	10.65	True	False	False
+1459	TRP	PI	41.1	27	6	11.89	3.66	False	False	True
+1596	GLN	PI	71.5	24	7	21.24	29.32	False	False	True
+1603	GLU	PI	61.2	32	9	6.4	20.77	False	True	False

@@ -1,0 +1,9 @@
+site_label	fncas9_pos	fncas9_residue	SpCas9_residue	SpCas9_pos	SaCas9_residue	SaCas9_pos	Nme1Cas9_residue	Nme1Cas9_pos	CjCas9_residue	CjCas9_pos
+G1243T (en31, WED-PLL)	1243	G	N	1041	-	-	G	755	K	769
+E1369R (en1, en31; PI PAM)	1369	E	E	1150	P	824	E	855	K	805
+E1449H (en31, PI PAM)	1449	E	Y	1232	K	903	-	-	D	853
+E1603H (en15, PI/WED)	1603	E	S	1351	Y	1030	Q	1059	N	956
+H1236L (PLM1, WED)	1236	H	A	1034	-	-	-	-	F	762
+R1367L (PLM1, PI)	1367	R	K	1148	K	822	L	853	G	803
+W1459K (PLM1, PI; RNA-contact)	1459	W	-	-	F	914	W	934	-	-
+Q1596N (PLM1, PI surface)	1596	Q	D	1344	S	1022	V	1052	K	950

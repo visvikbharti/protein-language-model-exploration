@@ -63,11 +63,6 @@ Thumbs.db
 data/raw/
 data/processed/
 data/external/
-results/runs/
-*.pdb
-*.cif
-*.fasta
-*.fa
 *.fastq
 *.fastq.gz
 *.npz
@@ -80,6 +75,12 @@ results/runs/
 *.zip
 *.tar.gz
 *.tgz
+
+# Results: keep small text artefacts in git, block large binaries
+results/runs/**/*.pdb
+results/runs/**/*.cif
+results/runs/**/inputs/*.pdb
+results/runs/**/inputs/*.cif
 
 # Allow small reference data deliberately
 !data/raw/.gitkeep

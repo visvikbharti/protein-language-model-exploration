@@ -1,0 +1,14 @@
+{
+  "candidate_name": "FnCas9-PLM1",
+  "mutations": "H1236L/R1367L/W1459K/Q1596N",
+  "per_mutation_llr": {
+    "H1236L": 2.198993,
+    "R1367L": 1.852996,
+    "W1459K": 3.01308,
+    "Q1596N": 1.135619
+  },
+  "sum_llr": 8.200688000000001,
+  "en31_sum_llr": -2.583936,
+  "source_scan": "2026-05-13_esm_saturation",
+  "built_at_utc": "2026-05-13T05:24:18.453973+00:00"
+}
