@@ -40,6 +40,15 @@ EXCLUDES=(
     --exclude '.cache/'
 )
 
+# Pull-only excludes: skip the bulky LigandMPNN per-sample artefacts and the
+# failed-run dirs. These were deleted from the Mac on 2026-05-14 to free disk;
+# without these excludes a `pull` would re-download ~15 GB and refill the disk.
+PULL_EXCLUDES=(
+    --exclude 'backbones/'   # per-sample LigandMPNN PDBs — analysis doesn't consume them
+    --exclude 'packed/'      # packed side-chain PDBs — ditto
+    --exclude '*FAILED*'     # failed-run dirs stay on HPC; not mirrored to Mac
+)
+
 case "$CMD" in
     push)
         echo "[sync] $PROJECT_ROOT/  ->  $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/"
@@ -48,12 +57,12 @@ case "$CMD" in
         ;;
     pull)
         echo "[sync] $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/results/  ->  $PROJECT_ROOT/results/"
-        rsync -avhP ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
+        rsync -avhP "${PULL_EXCLUDES[@]}" ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
             "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/results/" \
             "$PROJECT_ROOT/results/"
         echo
         echo "[sync] $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/logs/  ->  $PROJECT_ROOT/logs/"
-        rsync -avhP ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
+        rsync -avhP "${PULL_EXCLUDES[@]}" ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
             "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/logs/" \
             "$PROJECT_ROOT/logs/" || true
         ;;
@@ -63,7 +72,7 @@ case "$CMD" in
         echo "Examples:"
         echo "  $0 push           # full push"
         echo "  $0 push -n        # dry-run"
-        echo "  $0 pull           # pull results/ and logs/ from HPC"
+        echo "  $0 pull           # pull results/ and logs/ from HPC (skips backbones/packed/FAILED)"
         echo
         echo "Environment overrides:"
         echo "  HPC_HOST=$REMOTE_HOST"
