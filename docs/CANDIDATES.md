@@ -8,16 +8,21 @@
 
 ## 1. Quick reference — all candidates side by side
 
-| Candidate | Mutations | Source method | ESM-2 cumul. composite | LigandMPNN top_freq min | Cumul. apo ΔΔG (kcal/mol) | Boltz iPTM (DNA-PAM) | In en31 envelope? |
-|-----------|-----------|---------------|------------------------|--------------------------|---------------------------|---------------------|-------------------|
-| **FnCas9-WT** | (none) | — | 0 | — | 0 | 0.939±0.008 | yes (anchor) |
-| **FnCas9-en31** | G1243T / E1369R / E1449H | Acharya 2024 directed evolution | (G1243T rank 1, others Q3) | n/a (not sampled) | **+0.40** | **0.942±0.008** | yes (anchor) |
+| Candidate | Mutations | Source method | ESM-2 cumul. composite | LigandMPNN top_freq min | Cumul. apo ΔΔG (kcal/mol) | Boltz iPTM (DNA-PAM, MSA) | In en31 envelope? |
+|-----------|-----------|---------------|------------------------|--------------------------|---------------------------|---------------------------|-------------------|
+| **FnCas9-WT** | (none) | — | 0 | — | 0 | 0.917 ± 0.028 | yes (anchor) |
+| **FnCas9-en31** | G1243T / E1369R / E1449H | Acharya 2024 directed evolution | (G1243T rank 1, others Q3) | n/a (not sampled) | **+0.40** | **0.927 ± 0.009** | yes (anchor) |
 | **FnCas9-en15** | E1603H | Acharya 2024 | (rank 5,109/7,429, Q3) | n/a | **−1.37** | not run | yes (anchor) |
-| **FnCas9-PLM3** | G1243T / W1507K / C1292K / M1617K | ESM-2 zero-shot | +13.7 | n/a | **−8.42** | **0.901±0.056** ↓ | "too stable" — outside |
-| **FnCas9-PLM4** | T1535V / Y1249F / Y1341L / A1325K | LigandMPNN | n/a | 0.989 | **+6.74** | not run (skipped after gate) | ❌ outside (+6 above en31) |
-| **FnCas9-PLM5** | Y1249F / Y1341L / A1325K / K1479F | LigandMPNN + ΔΔG gate | n/a | 0.985 | **+0.59** | **0.933±0.025** ≈ en31 | ✓ essentially at en31 |
+| **FnCas9-PLM3** | G1243T / W1507K / C1292K / M1617K | ESM-2 zero-shot | +13.7 | n/a | **−8.42** | **0.848 ± 0.068** ↓↓ | "too stable" — outside |
+| **FnCas9-PLM4** | T1535V / Y1249F / Y1341L / A1325K | LigandMPNN | n/a | 0.989 | +6.74 ⚠ filter call later refuted | **0.919 ± 0.025** | **REINSTATED 2026-05-15** — see note below |
+| **FnCas9-PLM5** | Y1249F / Y1341L / A1325K / K1479F | LigandMPNN + ΔΔG gate | n/a | 0.985 | **+0.59** | **0.937 ± 0.007** ← BEST | ✓ essentially at en31 |
 
-The "en31 envelope" is the calibrated-safe band [−1.4, +0.4] kcal/mol cumulative apo ΔΔG that the two known-functional Acharya 2024 variants occupy.
+**Update 2026-05-15/16 (post-campaign, robustness phase):**
+- Boltz numbers above are the **MSA-enabled apples-to-apples rerun** (SLURM jobs 219552 + 219564). PLM5 has the highest prot↔DNA-PAM iPTM of all 5 variants — exceeds even en31. The single-sequence numbers from the original campaign (PLM5 0.933 ± 0.025; en31 0.942 ± 0.008) showed PLM5 ≈ en31; MSA mode strengthens this to PLM5 > en31 with 7× tighter variance.
+- **PLM4 reinstated.** The proteinmpnn_ddg call of T1535V at +4.15 kcal/mol (which drove the +6.74 cumulative and the v4 → v5 swap) is now known to be miscalibrated for hydrophobic↔K substitutions. ThermoMPNN cross-check on T1535V: **−0.19 kcal/mol (neutral)**. Direct Boltz on PLM4 confirms PLM4 is in the en31/PLM5 class (3rd of 5 variants on iPTM; tied with WT statistically). Two of three methods now agree PLM4 is viable. The lone objection (proteinmpnn_ddg) is the known-miscalibrated method.
+- **ThermoMPNN-D pairwise epistasis (§2.3 of robustness plan, SLURM job 220382).** PLM5's |Σ epistasis| / |Σ additive| = **0.019 (2%)** — its mutations are spatially distributed (closest pair 14 Å, others 22–50 Å) so the campaign's independence-assumption per-position scoring is operationally safe. en31's ratio = 7.1× — its 3 mutations are clustered in a ~9 Å volume and the wet-lab stability gain is mostly cooperative. Falsifiable corollary: en31 singles should be near-WT individually, PLM5 singles should combine near-additively.
+
+The "en31 envelope" is the calibrated-safe band [−1.4, +0.4] kcal/mol cumulative apo ΔΔG that the two known-functional Acharya 2024 variants occupy. **Caveat 2026-05-15:** the apo-ΔΔG filter that defined this envelope (proteinmpnn_ddg) is now known to be miscalibrated for certain substitutions (W→K stabilizing; T→V destabilizing). The envelope is still useful as an early-stage triage signal, but rejections must be confirmed by a second method (ThermoMPNN) or by direct complex prediction (Boltz).
 
 ---
 

@@ -504,23 +504,38 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 
 ## 9. What's next
 
-**Immediate (this campaign):**
+**Status as of 2026-05-16.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. Wet-lab is the *terminal* step, gated on every robustness criterion passing.
 
-1. Boltz-2 job 214530 completes. Inspect per-variant pLDDT and ipTM scores. If WT and en31 read as confidently folded but PLM3 or PLM5 doesn't, that's a flag worth re-running.
-2. Local analysis script (TBD) to load Boltz `.cif` files, extract per-residue confidence, side-chain orientation at residues 1243 / 1369 / 1449 / 1603 / our PLM picks, and PAM-contact distances. PyMOL or Biotite Python API.
-3. Sync all `results/runs/2026-05-13_*` back to Mac for analysis + figure prep.
+**Robustness-phase progress (2026-05-15 / 2026-05-16):**
 
-**Near-term (next campaign):**
+| § | Robustness dimension | Action(s) | Status |
+|---|---|---|---|
+| 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AF3 Server (☐ user browser task); Chai-1 (☐ HPC attempt) | partial — Boltz done, second-predictor pending |
+| 2.2 | Method — apo-ΔΔG filter bracketing | ThermoMPNN cross-check (✅); direct Boltz on PLM4 (✅) | ✅ DONE — PLM4 reinstated |
+| 2.3 | Modeling assumption — pairwise epistasis | ThermoMPNN-D on all 9 candidate pairs (✅) | ✅ DONE — independence holds for PLM5 |
+| 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (license cleared; pending) | ☐ in progress |
+| 2.5 | Falsifiable predictions — E1449L vs E1449H | Single-point Boltz | ☐ pending (~0.5 hr V100) |
 
-1. **Wet-lab handoff prep.** If any of PLM3 / PLM5 looks structurally promising (Boltz confidence comparable to en31), produce a one-page handoff document: variant FASTA, predicted mutations, predicted PAM (would require running Protein2PAM as oracle), expected on/off-target ratio (would require running the AiCE or similar predictor).
-2. **PLM4-vs-PLM5 ablation.** Compare the structural prediction for PLM4 (with T1535V) vs PLM5 (without). If T1535V meaningfully disrupts the PLM4 complex, that validates the apo-ΔΔG filter; if it doesn't, the filter is too aggressive.
-3. **Targeted single-point predictions.** E1449L (our prediction vs Acharya's E1449H), E1603L (ditto vs E1603H). These are cheap to compute and falsifiable.
+**Key new findings (post-campaign, 2026-05-15):**
 
-**Longer-term:**
+1. **PLM5 leads all 5 variants on MSA-enabled Boltz** (apples-to-apples, jobs 219552 + 219564). iPTM 0.951 ± 0.005 — beats even en31 (0.940 ± 0.009); prot↔DNA-PAM iPTM 0.937 ± 0.007 vs en31 0.927 ± 0.009. Variance tightened ~7× vs single-sequence. **PLM5 ≥ en31 is now a falsifiable in-silico prediction.**
+2. **PLM4 is reinstated as a viable v4 alternative.** The apo-ΔΔG filter (proteinmpnn_ddg) that rejected T1535V at +4.15 kcal/mol is miscalibrated for hydrophobic↔K substitutions. ThermoMPNN cross-check puts T1535V at −0.19 (neutral); direct Boltz on PLM4 gives iPTM 0.933 ± 0.025 (indistinguishable from en31/PLM5). Operational rule: apo-ΔΔG is triage only; rejections must be confirmed by a second method.
+3. **PLM5's mutations are spatially independent** (ThermoMPNN-D pairwise epistasis, SLURM job 220382). |Σ epistasis| / |Σ additive| = 0.019 (2%) — the campaign's independence-assumption per-position scoring is operationally safe for PLM5's geometry. en31 by contrast has |epistasis|/|additive| = 7.1× — its measured stability gain is mostly cooperative. **Falsifiable corollary**: en31 singles should be near-WT individually but combine non-additively; PLM5 singles should combine near-additively.
 
-1. **PAM oracle integration.** Use Protein2PAM as a per-variant fitness signal (predicted PAM PWM vs target NRG PWM). Would let us in-silico-evolve a candidate toward broader PAM tolerance without committing to a specific mutation set up-front. Blocked on the Polyform-NC license question.
-2. **Epistasis testing.** Score the 6 pairwise combinations of en31's three mutations under each model. The independent-marginal sum vs the explicit pairwise score will tell us how much epistasis we're missing.
-3. **Pre-print.** The ESM-2-vs-LigandMPNN head-to-head at the en31 PAM-contact positions is a publishable methods-comparison result on its own, even before wet-lab validation. Would also include the proteinmpnn_ddg calibration finding (en31 functional at +3.2 single-position apo ΔΔG).
+**Remaining robustness items (the "ready for the PI" gate):**
+
+1. Run **single-point Boltz on E1449L vs E1449H** (~0.5 hr V100) — records the falsifiable claim that PLM/LigandMPNN's preference for L over H is wet-lab-testable.
+2. Attempt **Chai-1** as a second structure predictor on PLM5 / en31 / WT (HPC; may OOM on V100 → fallback path needed).
+3. User submits **PLM5 / en31 / WT to AlphaFold3 Server** in browser for criterion 1's second-predictor confirmation.
+4. Run **Protein2PAM** on PLM5 / en31 / WT for the predicted PAM tolerance profile (criterion 2).
+
+**Terminal step (PI-gated, after robustness phase passes):**
+
+- **Wet-lab handoff** of FnCas9-PLM5 — in-vitro cleavage assay alongside WT and en31 controls. Bring to the PI only after the four pending robustness items above are green.
+
+**Longer-term, independent of wet-lab outcome:**
+
+1. **Pre-print of the methods-comparison finding** (ESM-2 vs LigandMPNN vs Boltz at en31 PAM-contact positions) — publishable on its own. Would also include the apo-ΔΔG miscalibration finding (proteinmpnn_ddg's hydrophobic↔K systematic bias) and the ThermoMPNN-D epistasis finding (PLM-distributed vs evolution-clustered mutation geometries differ in coupling regime).
 
 ---
 

@@ -124,6 +124,7 @@ def main() -> int:
     variants = {
         "fncas9_wt":    ("FnCas9-WT",   wt),
         "fncas9_plm3":  ("FnCas9-PLM3", apply_mutant(wt, parse_mutant("G1243T/W1507K/C1292K/M1617K"))),
+        "fncas9_plm4":  ("FnCas9-PLM4", apply_mutant(wt, parse_mutant("T1535V/Y1249F/Y1341L/A1325K"))),
         "fncas9_plm5":  ("FnCas9-PLM5", apply_mutant(wt, parse_mutant("Y1249F/Y1341L/A1325K/K1479F"))),
         "fncas9_en31":  ("FnCas9-en31", apply_mutant(wt, parse_mutant("G1243T/E1369R/E1449H"))),
     }
