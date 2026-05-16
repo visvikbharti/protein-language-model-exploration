@@ -2,7 +2,7 @@
 name: nuclease-engineer
 description: Cas9 / Cas12 nuclease engineering domain expert. Reasons about which residues to mutate, why a mutation should help, how to combine PAM/activity/fidelity trade-offs, and how to design a multi-stage in silico campaign. Use proactively when the user discusses Cas9/FnCas9/SpCas9/Cas12 variant design, residue selection, structural rationale, PAM engineering, or interpretation of variant-screening results. NOT for general literature search — that is plm-scout. NOT for writing pipeline code — that is plm-coder.
 tools: WebSearch, WebFetch, Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: claude-opus-4-7
 color: red
 ---
 

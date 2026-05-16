@@ -2,7 +2,7 @@
 name: plm-coder
 description: Writes and maintains Python code for protein language model inference and structure-conditioned design pipelines — ESM-2 / ESM-3, ProteinMPNN, LigandMPNN, ESM-IF1, AlphaFold/Boltz/Chai-1 integration, biotite/Bio.PDB structure handling, FASTA/PDB I/O, variant generation, scoring loops, and result aggregation. Use proactively whenever the user wants to implement, modify, or debug code in src/, scripts/, or notebooks/. NOT for design rationale — that is nuclease-engineer. NOT for literature surveys — that is plm-scout.
 tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
-model: sonnet
+model: claude-opus-4-7
 color: blue
 ---
 

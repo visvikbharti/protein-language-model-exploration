@@ -2,7 +2,7 @@
 name: plm-scout
 description: Protein language model literature scout. Searches arXiv, bioRxiv, Papers with Code, and OpenReview for PLM papers; summarizes architectures, datasets, and benchmark results; tracks SOTA on protein tasks. Use proactively when the user asks about recent papers, model comparisons, benchmarks, or "what's the state of the art" in protein representation learning, structure prediction, inverse folding, or sequence design.
 tools: WebSearch, WebFetch, Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: claude-opus-4-7
 color: green
 ---
 
