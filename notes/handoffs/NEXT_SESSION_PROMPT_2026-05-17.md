@@ -1,53 +1,72 @@
 # Next-session priming prompt
 
-Paste the block below as the first message in tomorrow's session. It gives Claude enough context to resume the robustness phase without re-deriving state.
+Paste the block below as the first message in the next session. Works for either the **2026-05-16 evening session** (when the user returns to campus and the HPC VPN is no longer needed) **or any later session**.
 
 ---
 
-Resuming the FnCas9 PLM-redesign project after a one-day pause. Today is the next robustness-phase work session.
+Resuming the FnCas9 PLM-redesign project. Robustness phase is mid-flight; we are NOT yet at the wet-lab handoff. **Today's session date varies — read the worklogs in order to confirm the latest state before acting.**
 
-**State at end of last session (2026-05-15 / 2026-05-16 early):**
-- In-silico campaign is complete; recommended candidate is **FnCas9-PLM5** (Y1249F / Y1341L / A1325K / K1479F).
-- Robustness phase is mid-flight. **3 of 5 "ready for the PI" criteria are ✅ DONE:**
-  - ✅ §2.2 apo-ΔΔG filter bracketed (PLM4 reinstated, proteinmpnn_ddg known-miscalibrated for hydrophobic↔K).
-  - ✅ §2.3 pairwise epistasis characterized (ThermoMPNN-D: PLM5's |Σ epistasis|/|Σ additive| = 0.019; en31's = 7.1×).
-  - ✅ §2.1 partial (MSA-enabled Boltz across 5 variants — **PLM5 leads even en31**; still need a second predictor).
-- 2 criteria still open: structural second-predictor agreement (§2.1), functional gap (§2.4), and the falsifiable E1449L/H prediction (§2.5).
+**State at end of 2026-05-16 afternoon session:**
+
+- In-silico campaign is complete; recommended candidate is **FnCas9-PLM5** (Y1249F / Y1341L / A1325K / K1479F). PLM4 is a viable backup (T1535V replaces K1479F).
+- Robustness phase is **3 of 5 "ready for the PI" criteria ✅ DONE**:
+  - ✅ §2.1 partial — MSA-Boltz across 5 variants (PLM5 leads even en31). Second predictor still needed for full ✅.
+  - ✅ §2.2 apo-ΔΔG filter bracketed (PLM4 reinstated; proteinmpnn_ddg known-miscalibrated for hydrophobic↔K).
+  - ✅ §2.3 pairwise epistasis characterized (ThermoMPNN-D: PLM5 |Σ ep|/|Σ add| = 0.019; en31's = 7.1×).
+- **§2.5 IMPLEMENTED LOCALLY ON 2026-05-16, NOT YET SUBMITTED.** Files already exist:
+  - `scripts/prepare_boltz_yamls.py` — `fncas9_e1449l` and `fncas9_e1449h` already in the variants dict.
+  - `hpc/slurm/04c_boltz_e1449.sbatch` — sbatch ready to submit (mirrors the 04b PLM4 pattern).
+  - `hpc/inputs/boltz_fncas9_e1449l.yaml` and `boltz_fncas9_e1449h.yaml` — already generated locally.
+  - **Do NOT re-create these files.** Just push, submit, pull, analyze.
+- 2 criteria still ☐ open after §2.5 lands: §2.1 second predictor (AlphaFold3 Server / Chai-1) and §2.4 (Protein2PAM functional gap).
+- HPC work was **blocked on 2026-05-16 by VPN setup** (user was off-campus and first-time-using-VPN). Expected to clear once user is back on campus network.
+
+**Significant deck/docs work landed 2026-05-16 afternoon:**
+
+- `docs/presentation/FnCas9_PLM_Redesign.pptx` is now **27 slides, 12 figures, 2.0 MB**. 5 new robustness-phase figures + 3 new slides (per-residue pLDDT trace, pairwise distance heatmap, 3D structural rendering on PDB 5B2O).
+- New plan doc `notes/plans/2026-05-16_TIER1_MD_PROXY_PLAN.md` (Tier 1 = ~10 ns OpenMM relaxation of 6 systems including SpCas9 as baseline; ~3–6 GPU-days). **Optional and explicitly gated to AFTER §2.4 + §2.5 close.** Do not start unless user asks.
 
 **Before doing anything else, read these for full context (in this order):**
-1. The auto-memory `session_handoff_2026-05-16.md` (it has the full state + gotchas).
-2. `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md` (live roadmap; §6 is the "ready for the PI" gate).
-3. `notes/worklog/2026-05-15_WORKLOG.md` (chronological per-session log; latest entry is the §2.3 epistasis section).
-4. `notes/plm/verification-log.md` last 3 sections (PLM4 direct Boltz / MSA Boltz / ThermoMPNN-D epistasis).
+
+1. The auto-memory `session_handoff_2026-05-16.md` (full state + gotchas; reflects end-of-2026-05-16-afternoon state).
+2. `notes/worklog/2026-05-16_WORKLOG.md` (today's chronology — what was done locally, what was deferred).
+3. `notes/worklog/2026-05-15_WORKLOG.md` (predecessor — has the MSA-Boltz, PLM4-reinstated, and ThermoMPNN-D results).
+4. `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md` (live roadmap; §6 is the "ready for the PI" gate).
+5. `notes/plm/verification-log.md` last 3 sections (PLM4 direct Boltz / MSA-Boltz / ThermoMPNN-D epistasis).
 
 **Today's work, in priority order:**
 
-1. **§2.5 — single-point E1449L vs E1449H Boltz** (~0.5 hr V100; closes criterion 5).
-   - Add `fncas9_e1449l` and `fncas9_e1449h` to the variants dict in `scripts/prepare_boltz_yamls.py` (single mutants on WT backbone, WED+PI truncation 1230–1620).
-   - Run `.venv/bin/python scripts/prepare_boltz_yamls.py` to regenerate YAMLs.
-   - `bash hpc/sync.sh push`, then on HPC: `sbatch hpc/slurm/04_boltz_complex.sbatch` (will pick up the new YAMLs).
-   - When done: `bash hpc/sync.sh pull`, then `.venv/bin/python scripts/boltz_analyze.py` on the new run dir.
-   - Record the result in `notes/plm/verification-log.md` as the falsifiable E1449L/H claim with CI.
+1. **§2.5 — push, submit, pull, analyze** (~30 min wall + ~10 min human; closes criterion 5):
+   ```
+   bash hpc/sync.sh push                          # mirrors the new sbatch + YAMLs
+   ssh tejas                                       # password auth (no key registered)
+     sbatch hpc/slurm/04c_boltz_e1449.sbatch
+     squeue -u $USER                               # watch (job ID echo'd by sbatch)
+     exit
+   bash hpc/sync.sh pull                          # pull results when done
+   PYTHONPATH=src .venv/bin/python scripts/boltz_analyze.py \
+     --run-dir results/runs/YYYY-MM-DD_boltz_e1449
+   ```
+   Then record the falsifiable E1449L vs E1449H result (iPTM, prot↔DNA-PAM iPTM, per-residue pLDDT at position 1449, with σ across 5 samples) in `notes/plm/verification-log.md`. Flip §6 criterion 5 to ✅ in the robustness plan.
 
-2. **§2.1 — Chai-1 attempt on HPC** (closes criterion 1's second-predictor leg).
-   - Chai-1 has similar-to-larger memory needs than Boltz; may OOM on V100 32GB. Have a truncation fallback ready (the existing WED+PI 1230–1620 truncation is the first fallback; an even tighter PI-only window is the second).
-   - Inputs: PLM5 / en31 / WT FASTAs (already in the project).
-   - This may need a new sbatch (`hpc/slurm/06_chai1.sbatch`) — write it following the pattern of `05_thermompnn_d.sbatch`.
+2. **§2.1 Chai-1 attempt on HPC** (closes criterion 1's second-predictor leg). Chai-1 has similar-to-larger memory needs than Boltz; may OOM on V100 32GB. Have a truncation fallback ready (existing WED+PI 1230–1620 is the first fallback; even tighter PI-only window is the second). Inputs: PLM5 / en31 / WT FASTAs (already in the project). This needs a NEW sbatch `hpc/slurm/06_chai1.sbatch` — write it following the pattern of `05_thermompnn_d.sbatch`.
 
-3. **§2.4 — Protein2PAM scan** (~10 min, web service; closes criterion 2).
-   - Free at protein2pam.profluent.bio (Polyform-NC cleared for academic use; Nayfach et al. *Nat Biotechnol* 2026).
-   - Submit PLM5 / en31 / WT FASTAs; record predicted PAM PWMs in `notes/plm/verification-log.md`.
+3. **§2.4 Protein2PAM scan** (~10 min, web service at protein2pam.profluent.bio; closes criterion 2). Polyform-NC license cleared for academic use. Submit PLM5 / en31 / WT FASTAs; compare predicted PAM PWMs; record in `notes/plm/verification-log.md`.
 
-4. **User browser task** (parallel to compute work — please do this in a browser tab independent of the Claude session):
-   - Submit PLM5 / en31 / WT to **AlphaFold3 Server** (alphafoldserver.com). Confirms criterion 1's second-predictor leg from a fully independent source. Free academic access; ~few-min queue.
+4. **User browser task (parallel to compute)** — submit PLM5 / en31 / WT to **AlphaFold3 Server** (alphafoldserver.com). Confirms criterion 1's second-predictor leg from a fully independent source. Free academic access; ~few-min queue.
 
 **Operational gotchas (don't re-discover):**
-- HPC SSH to tejas (CSIR-IGIB) is **password-only** (no key registered). The user runs `bash hpc/sync.sh push|pull` interactively each time.
-- **`prepare_boltz_yamls.py` needs Python 3.10+** — use `.venv/bin/python` explicitly, not system `python3`.
-- HPC `dgx` partition has a **~1.5h practical wall-time limit** despite SBATCH `--time=04:00:00`. Boltz at 5 samples on the truncated WED+PI takes ~10 min, so this is not a constraint for §2.5, but flag for any saturation-style job.
-- The 9.1 GB `results/runs/2026-05-15_thermompnn_d_hpc/additive.csv` exists locally — don't try to load with pandas if you need to look anything up. Use grep (see `scripts/thermompnn_d_epistasis_analyze.py` for the pattern).
-- Memory ecosystem: `project_context.md` is the high-level state; `session_handoff_2026-05-16.md` is the most recent detailed snapshot. Read both at session start.
 
-**Wet-lab handoff is the terminal step**, gated on all 5 criteria ✅. Don't pitch it as the next move — the user has stated this explicitly. After all 5 criteria pass, the PI conversation happens.
+- **HPC SSH to tejas (CSIR-IGIB) is password-only** (no key registered). User runs `bash hpc/sync.sh push|pull` interactively each time.
+- **VPN required if off-campus.** User figured this out on 2026-05-16 the hard way. On-campus = no VPN needed; off-campus = VPN.
+- **`prepare_boltz_yamls.py` needs Python 3.10+** (uses `dataclass(slots=True)`). Use `.venv/bin/python` explicitly, NOT system `python3`.
+- HPC `dgx` partition has a **~1.5h practical wall-time limit** despite SBATCH `--time=04:00:00`. Boltz at 5 samples on the truncated WED+PI takes ~10 min, so this is NOT a constraint for §2.5, but flag for any saturation-style or MD job.
+- ThermoMPNN-D `additive.csv` (9.1 GB) at `results/runs/2026-05-15_thermompnn_d_hpc/` — don't load with pandas; use grep (see `scripts/thermompnn_d_epistasis_analyze.py`).
+- PPT rebuild: `PYTHONPATH=src .venv/bin/python scripts/build_presentation.py` regenerates all 12 figures + 27 slides from scratch.
+- Memory ecosystem: `project_context.md` = high-level state; `session_handoff_2026-05-16.md` = latest detailed snapshot. Read both at session start.
 
-Start by reading the session_handoff_2026-05-16 memory + the robustness plan, then propose the §2.5 implementation as the first concrete step.
+**Wet-lab handoff is the terminal step**, gated on all 5 criteria ✅. Don't pitch it as the next move — the user has stated this explicitly and durably (`feedback_robustness_before_wetlab` memory). After all 5 criteria pass, the PI conversation happens.
+
+**Tier 1 MD-proxy** (`notes/plans/2026-05-16_TIER1_MD_PROXY_PLAN.md`) exists as an optional confidence-reinforcement step. Do NOT start it unless §2.4 + §2.5 are closed AND the user explicitly asks.
+
+Start by reading the session_handoff memory + 2026-05-16 worklog + robustness plan, then propose the §2.5 push/submit as the first concrete step.
