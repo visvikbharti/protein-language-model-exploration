@@ -1,7 +1,7 @@
 # Tier 1 MD-proxy plan — SpCas9 baseline + short dynamics check
 
 **Authored:** 2026-05-16
-**Status:** PLAN — not yet started. Optional addition AFTER §2.4 Protein2PAM and §2.5 E1449L/H close.
+**Status:** Phase A ✅ COMPLETE (2026-05-18 evening). SpCas9 PI Boltz baseline added to MSA-Boltz comparison table, doc updates propagated to verification log + PROJECT_OVERVIEW + PI brief + TECHNICAL_REPORT + PPT. Phase B (OpenMM env setup) not started; awaiting decision on whether to proceed to MD before PLM5 wet-lab data lands.
 **Predecessor:** [`notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`](2026-05-15_ROBUSTNESS_PLAN.md) (active robustness phase)
 **Triggered by:** user request 2026-05-16 — "can we work on MD simulation and compare SpCas9 RNP binding with all variants of enFnCas9 and our novel nuclease".
 
@@ -51,22 +51,20 @@ If any of these become necessary, write a fresh Tier 2 plan.
 
 ## 3. Implementation phases
 
-### Phase A — SpCas9 Boltz baseline (~1 hour, blocking)
+### Phase A — SpCas9 Boltz baseline ✅ COMPLETE (2026-05-18)
 
-1. **Sequence.** SpCas9 = UniProt Q99ZW2 (1,368 aa, *Streptococcus pyogenes*). Cache to `data/raw/Q99ZW2_spcas9.fasta`.
-2. **sgRNA + DNA target.** Two options:
-   - (a) Use the **same** sgRNA + DNA as the FnCas9 set (from 5B2O chains B/C/D). Apples-to-apples interface metric; honest caveat is that the SpCas9 scaffold is not what 5B2O's sgRNA was designed for.
-   - (b) Use a **SpCas9-canonical** sgRNA + dsDNA target (e.g. from PDB 4OO8 or 4UN3). Each method on its native substrate.
-   - **Recommendation: (a)**. The point is to compare interface metrics at the same target, not to optimise either nuclease's native chemistry.
-3. **Truncation.** SpCas9's PAM-interacting (PI) domain is ~1100–1368 (per Hirano 2016). If full-length fits V100 32GB, run full. If not, truncate analogously: 1100–1368. Verify with a quick `boltz predict --dry-run` size estimate.
-4. **Script changes.**
-   - Add `--pdb 4UN3` (SpCas9 + sgRNA + DNA) reference extraction to a new `scripts/prepare_boltz_yaml_spcas9.py`, OR extend `prepare_boltz_yamls.py` to accept an arbitrary protein/sgRNA/DNA spec. **Prefer the latter** for reproducibility.
-   - Add `spcas9` entry to the variants dict (where the "WT protein" is SpCas9, not FnCas9).
-5. **sbatch.** New `hpc/slurm/04d_boltz_spcas9.sbatch` mirroring 04b.
-6. **Run.** Submit, ~10–15 min wall on V100, pull, run `scripts/boltz_analyze.py`.
-7. **Add to the 5-variant MSA-Boltz table.** SpCas9 becomes the 6th row.
+1. **Sequence.** ✅ SpCas9 = UniProt Q99ZW2 (1,368 aa, *Streptococcus pyogenes*). Cached at `data/raw/Q99ZW2_spcas9.fasta`.
+2. **sgRNA + DNA target.** ✅ Option (a) — same 5B2O-derived sgRNA + DNA C/D as the FnCas9 set. Apples-to-apples interface metric. Caveat documented in YAML header.
+3. **Truncation.** ✅ PI domain only, residues 1100–1368 (269 aa, per Hirano 2016). Full-length 1368 aa would OOM V100 32GB. 269 aa < FnCas9's 391-aa WED+PI window so fits comfortably.
+4. **Script changes.** ✅ For the single one-off, wrote YAML directly at `hpc/inputs/boltz_spcas9_pi.yaml` (no script refactor — defer until 2nd cross-species variant added). Extended `scripts/boltz_analyze.py` auto-detection to recognise `spcas9_*`, `nme1cas9_*`, `sacas9_*`, `cjcas9_*` subdirs alongside `fncas9_*`. Special label map updated: `spcas9_pi` → `SpCas9`.
+5. **sbatch.** ✅ `hpc/slurm/04e_boltz_spcas9.sbatch` written, mirrors 04c structure. MSA-Boltz, 5 diffusion samples, dgx V100, 64G mem, 1h walltime.
+6. **Run.** ✅ SLURM 221082 on tejas igib-dgx, COMPLETED 0:0 (2026-05-18). Output at `results/runs/2026-05-18_boltz_spcas9/spcas9_pi/`.
+7. **Add to MSA-Boltz table.** ✅ Six docs updated: verification log (Tier 1 Phase A section), PI brief (TL;DR + Why-it-works §1), TECHNICAL_REPORT (Abstract + §3.5.1) + regenerated HTML, build_presentation.py (new fig_spcas9_baseline + slide 17b) → PPT regenerated, PROJECT_OVERVIEW §9.
 
-**Success:** SpCas9 iPTM and prot↔DNA-PAM iPTM recorded with σ. PLM5 vs SpCas9 framed as a falsifiable claim.
+**Results (mean ± σ over 5 diffusion samples):**
+- SpCas9 PI iPTM 0.952 ± 0.001; prot↔DNA-PAM iPTM 0.967 ± 0.001.
+- Naive +0.030 over PLM5 on PAM interface, but confounded by (a) truncation-size (SpCas9 PI 269 aa < FnCas9 WED+PI 391 aa; smaller systems score systematically higher) and (b) MSA-depth asymmetry (SpCas9 ortholog space dramatically richer).
+- **Honest framing**: PLM5 in same high-confidence regime as SpCas9 PI (all variants iPTM > 0.92). NOT "PLM5 beats SpCas9". Within-FnCas9 "PLM5 ≥ en31" ranking preserved as clean apples-to-apples.
 
 ### Phase B — OpenMM environment setup (~1–2 days, Mac local)
 

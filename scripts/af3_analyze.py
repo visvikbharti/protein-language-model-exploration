@@ -4,15 +4,15 @@ Expected layout (per variant) after the user downloads + unpacks the AF3 Server
 job ZIPs into `data/browser_submissions/af3_server_output/`:
 
     af3_server_output/
-        FnCas9_WT_full/
+        FnCas9_WT_sgRNA_dsDNA/             # matches the AF3 job name we submitted
             summary_confidences.json        # top-level metrics
             fold_*_summary_confidences.json # per-ranked-model summaries (if present)
             fold_*_full_data.json           # per-residue confidence (if present)
             fold_*_model_0.cif              # structure ranked 0 (best)
             ...
-        FnCas9_PLM5_full/
+        FnCas9_PLM5_sgRNA_dsDNA/
             (same layout)
-        FnCas9_en31_full/
+        FnCas9_en31_sgRNA_dsDNA/
             (same layout)
 
 If AF3 Server changes its output format, run this on a single variant to
@@ -181,14 +181,26 @@ def print_summary(summaries: dict[str, dict]) -> None:
         log.info(row)
 
 
+def extract_variant_key(name: str) -> str | None:
+    """Pick the canonical variant token (WT/PLM3/PLM4/PLM5/en31) from a dir name.
+
+    Tolerates AF3 job-dir variations: 'FnCas9_WT_sgRNA_dsDNA',
+    'fold_fncas9_plm5_sgrna_dsdna' (AF3 sometimes lowercases), or 'FnCas9_PLM5_full'.
+    """
+    canonical = {"wt": "WT", "plm3": "PLM3", "plm4": "PLM4", "plm5": "PLM5", "en31": "en31"}
+    for token in name.split("_"):
+        if token.lower() in canonical:
+            return canonical[token.lower()]
+    return None
+
+
 def print_cross_comparison(af3_summaries: dict[str, dict]) -> None:
     log.info("\n=== AF3 vs Boltz cross-comparison (criterion 1 check) ===\n")
     log.info("Hypothesis: AF3 agrees with Boltz that PLM5 ≈/≥ en31 on iPTM and prot↔DNA-PAM.")
     log.info(f"\n{'Variant':<10} {'AF3 iPTM':<22} {'Boltz iPTM':<22} {'AF3 ≈ Boltz?':<14}")
     log.info("-" * 70)
     for name, af3 in af3_summaries.items():
-        # Map our variant labels to Boltz reference names
-        short = name.replace("FnCas9_", "").replace("_full", "")
+        short = extract_variant_key(name) or name
         boltz = BOLTZ_REF.get(short, {}).get("iptm")
         af3_iptm = af3.get("iptm", (0.0, 0.0))
         if boltz and af3_iptm[0] > 0:

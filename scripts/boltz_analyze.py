@@ -200,22 +200,29 @@ def main() -> int:
     if args.variants:
         variants = [v.strip() for v in args.variants.split(",")]
     else:
-        # Auto-detect fncas9_* subdirs that contain a Boltz results tree
+        # Auto-detect fncas9_* / spcas9_* / nme1cas9_* / etc. subdirs with Boltz results
+        cas_prefixes = ("fncas9_", "spcas9_", "nme1cas9_", "sacas9_", "cjcas9_")
         variants = sorted([
             p.name for p in run_dir.iterdir()
-            if p.is_dir() and p.name.startswith("fncas9_")
+            if p.is_dir() and p.name.startswith(cas_prefixes)
             and list(p.glob("boltz_results_*/predictions/boltz_*/"))
         ])
         if not variants:
-            log.error("No fncas9_* result subdirs found under %s", run_dir)
+            log.error("No <cas>_* result subdirs found under %s", run_dir)
             return 1
         log.info("Auto-detected variants: %s", ", ".join(variants))
 
-    nice_names = {v: v.replace("fncas9_", "").upper() for v in variants}
-    # Special-case common slug → label mappings (preserves old behavior)
+    def _label(slug: str) -> str:
+        for pfx in ("fncas9_", "spcas9_", "nme1cas9_", "sacas9_", "cjcas9_"):
+            if slug.startswith(pfx):
+                return slug[len(pfx):].upper() or pfx.rstrip("_").upper()
+        return slug.upper()
+
+    nice_names = {v: _label(v) for v in variants}
     SPECIAL = {"fncas9_wt": "WT", "fncas9_plm3": "PLM3", "fncas9_plm4": "PLM4",
                "fncas9_plm5": "PLM5", "fncas9_en31": "en31",
-               "fncas9_e1449l": "E1449L", "fncas9_e1449h": "E1449H"}
+               "fncas9_e1449l": "E1449L", "fncas9_e1449h": "E1449H",
+               "spcas9_pi": "SpCas9"}
     nice_names.update({k: v for k, v in SPECIAL.items() if k in variants})
 
     summaries: dict[str, dict] = {}

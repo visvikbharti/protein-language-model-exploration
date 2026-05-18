@@ -492,3 +492,79 @@ This section records empirical findings from our own runs (not literature). Each
   - **Decision: criterion 2 = ✅ under Reading A + Reading B's robustness signal as positive supplementary evidence.** PI gate now **5 of 5 ✅**. The wet-lab handoff is structurally unblocked from the gate; the documented caveat is "PAM relaxation per se is wet-lab-only — in-silico methods at our resolution cannot confirm it for FnCas9-class variants. PLM5's structural-robustness profile is the strongest positive evidence we can produce."
 
 - **Caveats:** (a) 5 diffusion samples per PAM × variant — modest sample size; the WT NAA σ of 0.050 reflects this noise. (b) Single seed across the 5 samples; multi-seed would further tighten variance estimates. (c) Truncated WED+PI window only — full-length protein not tested at any PAM. (d) The "absolute iPTM across PAMs" framing is a structural-prediction signal, not a functional one — wet lab is the only test of PAM relaxation in the cleavage-activity sense.
+
+---
+
+### 2026-05-18 14:39–14:59 IST — AlphaFold3 Server submission provenance (§2.1 second-predictor)
+
+- **Purpose:** Close criterion 1 of the PI gate (two independent structure predictors agree on PLM5's PAM-interface confidence). Boltz-2 already scored MSA-enabled apples-to-apples on the 5-variant set (`2026-05-15_boltz_complex/`); AF3 Server is the second predictor. Chai-1 was ruled out (requires bf16; CSIR-IGIB tejas V100 nodes only have fp16).
+- **3 jobs submitted in order (browser, alphafoldserver.com, paste-only flow):**
+
+  | Job name | Submitted (IST) | AF3 history modified-stamp |
+  |---|---|---|
+  | `FnCas9_WT_sgRNA_dsDNA`   | 14:39 | 2026-05-18 14:39 |
+  | `FnCas9_PLM5_sgRNA_dsDNA` | 14:54 | 2026-05-18 14:54 |
+  | `FnCas9_en31_sgRNA_dsDNA` | 14:59 | 2026-05-18 14:59 |
+
+  Server posted ETA: "up to 4 hours". Expected completion window: ~18:30–19:00 IST.
+
+- **Identical 4-entity payload across all 3 jobs (only protein differs):**
+
+  | Entity | Type | Length | SHA-256 | Source |
+  |---|---|---|---|---|
+  | Protein (WT)   | protein | 1629 aa | `4882826e46d5ed29df80616d86eee1e85f2b7e144882c50562338fc19b6c7754` | `data/browser_submissions/protein2pam_oneline_WT.fasta` |
+  | Protein (PLM5) | protein | 1629 aa | `f6b7692f358e99df824f7752b8ad5e676f4398dd66f50907b8966961f99bc677` | `data/browser_submissions/protein2pam_oneline_PLM5.fasta` |
+  | Protein (en31) | protein | 1629 aa | `898de6c5a7ff0b8692e60f3e5f58723c5ff6ff05490d9187ca6eba34e053fbb1` | `data/browser_submissions/protein2pam_oneline_en31.fasta` |
+  | sgRNA         | rna     | 93 nt   | `1a2008fcd2a64d18ac469635971d1646c7f5f20ccfd8b87514c262839a56103e` | `hpc/inputs/boltz_fncas9_plm3.yaml` |
+  | DNA target    | dna     | 30 nt   | `203d3a7f66e2cc83b205a979fae3f640830a48e5db4e21d7c79c887434e8a001` | `hpc/inputs/boltz_fncas9_plm3.yaml` |
+  | DNA PAM       | dna     |  9 nt   | `dfe99b4143a4df7f8585d78e2ee80e98ee40d6294cb9c652477fa60cbaf8af17` | `hpc/inputs/boltz_fncas9_plm3.yaml` |
+
+  All sequence inputs byte-identical to canonical Boltz-2 YAMLs used in `2026-05-15_boltz_complex/`, with one intentional difference: AF3 receives the **full-length 1629-aa protein** rather than the truncated 391-aa WED+PI window used for V100-fit Boltz runs.
+
+- **PLM5 mutations spot-checked on AF3's sequence-display grid** (Job 2 paste verification): Y1249F ✅, A1325K ✅, Y1341L ✅, K1479F ✅. WT and en31 confirmed by SHA-256 against canonical FASTAs.
+
+- **Analyzer prepared and smoke-tested 2026-05-18:** `scripts/af3_analyze.py` validated against synthetic mock dump (3 variants × 2 ranked summaries each + 1 mock CIF). Tolerates `fold_<jobname>` (lowercase) and `FnCas9_<variant>_sgRNA_dsDNA` (mixed case) directory layouts. Cross-comparison vs Boltz MSA reference table built in.
+
+- **Closure plan when results land:** Download all 3 ZIPs from AF3 history → unpack under `data/browser_submissions/af3_server_output/<dirname>/` → `PYTHONPATH=src .venv/bin/python scripts/af3_analyze.py`. If AF3 iPTM rank order is `PLM5 ≥ en31` (or |Δ| < 0.05 with all 3 above 0.85), **criterion 1 ✅** and PI gate transitions to fully closed 5/5.
+
+- **Note on prior 5/5 framing in this log:** The PAM-scan entry above asserted "PI gate now 5 of 5 ✅". That statement was over-eager — criterion 1 (independent structure predictors) is still in flight pending these AF3 jobs. The accurate framing is **4 of 5 ✅ with criterion 1 in-flight**. The PI brief and robustness plan use the correct 4/5 framing.
+
+---
+
+### 2026-05-18 — Tier 1 Phase A: SpCas9 cross-species Boltz baseline
+
+- **Purpose:** Add the field-standard nuclease (SpCas9, *S. pyogenes*) to the MSA-Boltz comparison table so PI-conversation claims have a cross-species anchor, not only the FnCas9-en31 anchor. Phase A of [`notes/plans/2026-05-16_TIER1_MD_PROXY_PLAN.md`](../plans/2026-05-16_TIER1_MD_PROXY_PLAN.md).
+- **Run dir:** `results/runs/2026-05-18_boltz_spcas9/spcas9_pi/` (SLURM 221082 on tejas igib-dgx, COMPLETED 0:0). MSA-Boltz, 5 diffusion samples, V100 32GB.
+- **Input:** `hpc/inputs/boltz_spcas9_pi.yaml` — SpCas9 (UniProt Q99ZW2) PI domain residues 1100–1368 (269 aa, per Hirano 2016 boundaries) + 5B2O-derived sgRNA + DNA target + DNA PAM (same nucleic-acid chains as the FnCas9 set, for apples-to-apples interface metric).
+- **Sbatch:** `hpc/slurm/04e_boltz_spcas9.sbatch`. **Analyzer:** `scripts/boltz_analyze.py` (extended in this session to auto-detect `spcas9_*`/`nme1cas9_*`/etc. alongside `fncas9_*`).
+
+- **Raw SpCas9 numbers vs MSA-Boltz reference set:**
+
+  | Metric | SpCas9 PI | PLM5 (ref) | en31 (ref) | WT FnCas9 (ref) |
+  |---|---|---|---|---|
+  | Overall iPTM            | **0.952 ± 0.001** | 0.951 ± 0.005 | 0.940 ± 0.009 | 0.926 ± 0.038 |
+  | iPTM protein↔DNA-PAM    | **0.967 ± 0.001** | 0.937 ± 0.007 | 0.927 ± 0.009 | 0.917 ± 0.028 |
+  | iPTM protein↔DNA-target | 0.952 ± 0.001     | (per-chain not tabulated) | | |
+  | iPTM protein↔sgRNA      | 0.939 ± 0.002     | | | |
+  | Mean per-residue pLDDT  | 0.913 ± 0.005     | 0.918 ± 0.001 | 0.909 ± 0.002 | 0.908 ± 0.005 |
+  | pTM (whole complex)     | 0.955 ± 0.002     | | | |
+
+- **Headline — SpCas9 PI scores +0.030 ABOVE PLM5 on protein↔DNA-PAM iPTM.** Naive read: SpCas9 > PLM5 > en31 > WT. **The honest reading is more nuanced**: all four sit in the high-confidence regime (iPTM > 0.92) and PLM5 is in the same predicted-quality regime as the field-standard SpCas9 reference, not above or below it within size-corrected noise.
+
+- **Confound 1 — truncation-size mismatch.** SpCas9 PI = 269 aa; FnCas9 WED+PI = 391 aa. Smaller systems systematically score higher iPTM in Boltz. Some of the +0.030 gap is artifactual. Size-matched would mean either (a) truncating FnCas9 to its PI-only window (~120 aa around 1500–1620), or (b) running SpCas9 full-length (1368 aa) which OOMs V100 32GB.
+
+- **Confound 2 — MSA-depth asymmetry.** SpCas9 has thousands of orthologs in databases; ColabFold's MSA for SpCas9 is dramatically richer than for FnCas9 (which is restricted to *Francisella*-clade orthologs). The SpCas9 σ of 0.001 (vs PLM5's 0.005, en31's 0.009, WT's 0.028) reflects this — Boltz is very certain about SpCas9 because the model has seen its ortholog space many times.
+
+- **Per-residue pLDDT readout is meaningless for SpCas9.** The analyzer prints engineered-position pLDDT (Y1249F, A1325K, …) for every variant; for SpCas9 these labels point at unrelated PI residues. The numbers in that table for SpCas9 are real Boltz output but should be ignored.
+
+- **Recast framing for PI-facing documents** (replaces "PLM5 ≥ en31 ≥ SpCas9" which was wrong):
+
+  > All three nucleases (PLM5, en31, SpCas9 PI) predict high-confidence PAM interfaces in MSA-Boltz (iPTM > 0.92). Absolute differences fall within a size-confounded comparison band: SpCas9 PI was truncated to 269 aa vs FnCas9 WED+PI at 391 aa; smaller windows systematically score higher iPTM. The actionable claim is that **PLM5's predicted interface confidence is in the same regime as the field-standard SpCas9 reference**, not that one ranks above the other.
+
+- **What this changes in the PI brief / handoff conversation:**
+  1. Replace any "PLM5 ≥ en31 ≥ SpCas9" framing with "PLM5 in same regime as SpCas9 PI".
+  2. The cross-species claim is "same regime as SpCas9", NOT "better than SpCas9".
+  3. The within-FnCas9 "PLM5 ≥ en31" claim still stands — both at 391-aa WED+PI, both with FnCas9-clade MSA.
+  4. Wet-lab plan unchanged: head-to-head PLM5 vs WT vs en31 remains the right experiment.
+
+- **Caveats:** (a) Single Boltz run; could re-run with different seed for variance bound. (b) Per-residue mapping not done for SpCas9. (c) No SpCas9 wet-lab in this campaign — SpCas9 is the in-silico predicted-quality anchor only. (d) The "same regime" framing is more defensible but less marketing-strong than "PLM5 wins" — accepting this trade for scientific accuracy.

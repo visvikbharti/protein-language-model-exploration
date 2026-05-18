@@ -615,6 +615,56 @@ def fig_msa_boltz_5variants() -> Path:
     return path
 
 
+def fig_spcas9_baseline() -> Path:
+    """Cross-species baseline (Tier 1 Phase A): SpCas9 PI vs FnCas9 set.
+
+    Caveats baked into the figure title + annotations: truncation-size mismatch
+    (SpCas9 269 aa vs FnCas9 391 aa) and MSA-depth asymmetry. The figure does
+    NOT claim PLM5 > SpCas9; it shows all 4 sit in the high-confidence regime
+    with confound annotations clearly visible.
+    """
+    variants = ["SpCas9 PI\n(269 aa)", "PLM5\n(391 aa)", "en31\n(391 aa)", "WT\n(391 aa)"]
+    metrics = [
+        ("Overall iPTM",
+         [0.952, 0.951, 0.940, 0.926],
+         [0.001, 0.005, 0.009, 0.038]),
+        ("prot↔DNA-PAM iPTM\n(functional regime)",
+         [0.967, 0.937, 0.927, 0.917],
+         [0.001, 0.007, 0.009, 0.028]),
+    ]
+    SPCAS9_COLOR = "#7B1FA2"
+    colors = [SPCAS9_COLOR, VARIANT_COLORS["PLM5"], VARIANT_COLORS["en31"], VARIANT_COLORS["WT"]]
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5), dpi=160, sharey=True)
+    for ax, (mname, vals, errs) in zip(axes, metrics):
+        bars = ax.bar(variants, vals, yerr=errs, color=colors,
+                      edgecolor="black", linewidth=0.6, capsize=4,
+                      error_kw={"elinewidth": 1.2, "ecolor": "#333"})
+        for b, val, err in zip(bars, vals, errs):
+            ax.text(b.get_x() + b.get_width()/2, val + err + 0.005,
+                    f"{val:.3f}", ha="center", fontsize=10, fontweight="bold")
+        ax.set_title(mname, fontsize=11, pad=8)
+        ax.set_ylim(0.85, 1.00)
+        ax.axhline(0.92, color="grey", linestyle="--", linewidth=0.5, alpha=0.5)
+        ax.text(3.4, 0.921, "iPTM = 0.92\n(high-confidence threshold)",
+                ha="right", fontsize=8, color="grey", alpha=0.7)
+        ax.grid(axis="y", linewidth=0.3, alpha=0.4)
+        ax.set_axisbelow(True)
+        ax.tick_params(axis="x", labelsize=9.5)
+
+    axes[0].set_ylabel("Confidence (mean ± σ over 5 diffusion samples)", fontsize=11)
+    fig.suptitle("Cross-species baseline (Tier 1 Phase A): PLM5 in same regime as SpCas9 PI\n"
+                 "Caveat: SpCas9 absolute +0.030 partly confounded by truncation size (269 vs 391 aa) "
+                 "and deeper SpCas9 MSA",
+                 fontsize=11.5, fontweight="bold", y=1.02)
+    plt.tight_layout()
+    path = FIG_DIR / "spcas9_cross_species.png"
+    plt.savefig(path, dpi=160, bbox_inches="tight")
+    plt.close()
+    log.info("wrote %s", path)
+    return path
+
+
 def fig_thermompnn_epistasis() -> Path:
     """ThermoMPNN-D pairwise epistasis — en31 (clustered, coupled) vs PLM5 (distributed, additive).
 
@@ -1142,6 +1192,8 @@ def build_deck():
     fig_dist = fig_distance_heatmap()
     # §2.5 result figure (added 2026-05-18)
     fig_e1449 = fig_e1449_comparison()
+    # Tier 1 Phase A: SpCas9 cross-species baseline (added 2026-05-18 evening)
+    fig_spcas9 = fig_spcas9_baseline()
 
     log.info("\nBuilding deck...")
     prs = Presentation()
@@ -1408,13 +1460,23 @@ def build_deck():
         0.6, 6.6, 12, 0.5, size=13, bold=True, color=ANTHRO_GREEN)
 
     # ── Slide 17: MSA-Boltz apples-to-apples ────────────────────────────────
-    s = add_content_slide(prs, "Robustness §2.1 — MSA-Boltz apples-to-apples: PLM5 leads all 5 variants")
+    s = add_content_slide(prs, "Robustness §2.1 — MSA-Boltz apples-to-apples: PLM5 leads all 5 FnCas9 variants")
     add_picture(s, fig_msa_5var, 0.3, 1.2, 12.7, 4.7)
     add_textbox(s, [
-        "PLM5 has the HIGHEST iPTM of all 5 variants — beats even en31 (the wet-lab-validated reference).",
+        "PLM5 has the HIGHEST iPTM of all 5 FnCas9 variants — beats even en31 (the wet-lab-validated reference).",
         "MSA tightened PLM5's iPTM σ ~7× (single-seq 0.034 → MSA 0.005). Strong convergence evidence — the prediction is genuinely settled, not a lucky sample.",
-        "Falsifiable: PLM5 > en31 on the functional protein↔DNA-PAM interface. en31 is wet-lab-validated; PLM5 ≥ en31 functionally is now a testable claim.",
+        "Falsifiable within FnCas9: PLM5 ≥ en31 on the functional protein↔DNA-PAM interface. en31 is wet-lab-validated; PLM5 ≥ en31 functionally is now a testable claim.",
     ], 0.6, 6.0, 12, 1.4, size=11, bullet=True)
+
+    # ── Slide 17b (NEW 2026-05-18 Tier 1 Phase A): SpCas9 cross-species ─────
+    s = add_content_slide(prs, "Tier 1 Phase A — cross-species baseline: PLM5 in same regime as SpCas9 PI")
+    add_picture(s, fig_spcas9, 0.5, 1.1, 12.3, 4.7)
+    add_textbox(s, [
+        "Added 2026-05-18 (SLURM 221082): SpCas9 PI (1100–1368, 269 aa) on the SAME 5B2O-derived sgRNA + DNA target + DNA PAM as the FnCas9 set. MSA-Boltz, 5 diffusion samples.",
+        "Raw numbers: SpCas9 PI iPTM 0.952 ± 0.001, prot↔DNA-PAM 0.967 ± 0.001. Naive read: SpCas9 +0.030 above PLM5 on the PAM interface.",
+        "Two confounds make the cross-species absolute comparison NOT clean apples-to-apples: (1) size — SpCas9 PI 269 aa < FnCas9 WED+PI 391 aa, smaller systems score systematically higher; (2) MSA depth — SpCas9 has dramatically richer ColabFold MSA than FnCas9.",
+        "HONEST claim: All 4 variants sit in the high-confidence regime (iPTM > 0.92). PLM5 is in the SAME predicted-quality band as SpCas9 PI. NOT 'PLM5 beats SpCas9'. The within-FnCas9 'PLM5 ≥ en31' ranking still stands clean (both at 391-aa truncation).",
+    ], 0.5, 5.95, 12.4, 1.5, size=10, bullet=True)
 
     # ── Slide 18 (NEW): Per-residue pLDDT trace ─────────────────────────────
     s = add_content_slide(prs, "Robustness §2.1 — per-residue confidence holds at every engineered site")
