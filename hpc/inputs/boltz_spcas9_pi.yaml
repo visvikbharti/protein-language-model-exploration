@@ -1,0 +1,26 @@
+# Boltz-2 input for SpCas9 PI domain + FnCas9 sgRNA + DNA target/PAM
+# Tier 1 Phase A: cross-species baseline for the MSA-Boltz comparison table.
+# Protein: SpCas9 (UniProt Q99ZW2) PI domain only, residues 1100-1368 (269 aa).
+# Rationale for truncation: Hirano 2016 defines SpCas9 PI as 1100-1368; the
+# PAM-interacting region is what the iPTM(protein↔DNA-PAM) metric probes,
+# matching the FnCas9 WED+PI truncation strategy used in 2026-05-15_boltz_complex.
+# Full-length 1368 aa would OOM on V100 32GB (same constraint as FnCas9 1629 aa).
+#
+# RNA + DNA: identical to the FnCas9 set (5B2O-derived chains B/C/D) for
+# apples-to-apples interface comparison. Honest caveat: this sgRNA scaffold is
+# designed for FnCas9, not SpCas9. The point is to compare interface metrics
+# at the same target, not to optimise SpCas9's native chemistry.
+version: 1
+sequences:
+  - protein:
+      id: A
+      sequence: VQTGGFSKESILPKRNSDKLIARKKDWDPKKYGGFDSPTVAYSVLVVAKVEKGKSKKLKSVKELLGITIMERSSFEKNPIDFLEAKGYKEVKKDLIIKLPKYSLFELENGRKRMLASAGELQKGNELALPSKYVNFLYLASHYEKLKGSPEDNEQKQLFVEQHKHYLDEIIEQISEFSKRVILADANLDKVLSAYNKHRDKPIREQAENIIHLFTLTNLGAPAAFKYFDTTIDRKRYTSTKEVLDATLIHQSITGLYETRIDLSQLGGD
+  - rna:
+      id: B
+      sequence: GGGAAAUUAGGUGCGCUGGGGGUUUCAGUUGCGCCGAAAGGCGCUCUGUAAUCAUUAAAAGUAUUUUGAACGGACCUCUGUUUGACACGUCUG
+  - dna:
+      id: C
+      sequence: CCGATACCACCCCAGCGCACCTAATTTCCC
+  - dna:
+      id: D
+      sequence: TGGTATCGG
