@@ -504,34 +504,34 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 
 ## 9. What's next
 
-**Status as of 2026-05-16.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. Wet-lab is the *terminal* step, gated on every robustness criterion passing.
+**Status as of 2026-05-18.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. **4 of 5 PI-gate criteria ✅**; wet-lab handoff is the *terminal* step, gated on the last criterion passing.
 
-**Robustness-phase progress (2026-05-15 / 2026-05-16):**
+**Robustness-phase progress (2026-05-15 → 2026-05-18):**
 
 | § | Robustness dimension | Action(s) | Status |
 |---|---|---|---|
-| 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AF3 Server (☐ user browser task); Chai-1 (☐ HPC attempt) | partial — Boltz done, second-predictor pending |
+| 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AF3 Server (☐ user browser task) | partial — Boltz done; AF3 Server pending. Chai-1 dropped (requires bf16; V100 lacks bf16) |
 | 2.2 | Method — apo-ΔΔG filter bracketing | ThermoMPNN cross-check (✅); direct Boltz on PLM4 (✅) | ✅ DONE — PLM4 reinstated |
 | 2.3 | Modeling assumption — pairwise epistasis | ThermoMPNN-D on all 9 candidate pairs (✅) | ✅ DONE — independence holds for PLM5 |
-| 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (license cleared; pending) | ☐ in progress |
-| 2.5 | Falsifiable predictions — E1449L vs E1449H | Single-point Boltz | ☐ pending (~0.5 hr V100) |
+| 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (license cleared; user browser task) | ☐ pending |
+| 2.5 | Falsifiable predictions — E1449L vs E1449H | Single-point Boltz (✅ SLURM 221040) | ✅ DONE — Boltz can't discriminate |
 
-**Key new findings (post-campaign, 2026-05-15):**
+**Key findings (post-campaign, 2026-05-15 → 2026-05-18):**
 
 1. **PLM5 leads all 5 variants on MSA-enabled Boltz** (apples-to-apples, jobs 219552 + 219564). iPTM 0.951 ± 0.005 — beats even en31 (0.940 ± 0.009); prot↔DNA-PAM iPTM 0.937 ± 0.007 vs en31 0.927 ± 0.009. Variance tightened ~7× vs single-sequence. **PLM5 ≥ en31 is now a falsifiable in-silico prediction.**
 2. **PLM4 is reinstated as a viable v4 alternative.** The apo-ΔΔG filter (proteinmpnn_ddg) that rejected T1535V at +4.15 kcal/mol is miscalibrated for hydrophobic↔K substitutions. ThermoMPNN cross-check puts T1535V at −0.19 (neutral); direct Boltz on PLM4 gives iPTM 0.933 ± 0.025 (indistinguishable from en31/PLM5). Operational rule: apo-ΔΔG is triage only; rejections must be confirmed by a second method.
 3. **PLM5's mutations are spatially independent** (ThermoMPNN-D pairwise epistasis, SLURM job 220382). |Σ epistasis| / |Σ additive| = 0.019 (2%) — the campaign's independence-assumption per-position scoring is operationally safe for PLM5's geometry. en31 by contrast has |epistasis|/|additive| = 7.1× — its measured stability gain is mostly cooperative. **Falsifiable corollary**: en31 singles should be near-WT individually but combine non-additively; PLM5 singles should combine near-additively.
+4. **At position 1449, three methods converge on L** but Acharya 2024 chose H for en31 (SLURM job 221040, 2026-05-18). Boltz cannot discriminate L from H as singles on WT backbone — every metric within 1σ; per-residue pLDDT at 1449 identical (0.954 L vs 0.951 H). E1449L has ~2× higher prediction variance. Acharya's H is consistent with §2.3 finding that the en31 triple cooperates — the cooperation requires H specifically (not L) at 1449 to combine with G1243T and E1369R.
+5. **Triple-independent residue-identity verification (2026-05-18)** — all 12 candidate positions, PDB 5B2O DBREF mapping, paper text, US patent SEQ ID NOs all consistent. No off-by-N error anywhere in the campaign. Documented in verification-log.md rows 28–30.
 
 **Remaining robustness items (the "ready for the PI" gate):**
 
-1. Run **single-point Boltz on E1449L vs E1449H** (~0.5 hr V100) — records the falsifiable claim that PLM/LigandMPNN's preference for L over H is wet-lab-testable.
-2. Attempt **Chai-1** as a second structure predictor on PLM5 / en31 / WT (HPC; may OOM on V100 → fallback path needed).
-3. User submits **PLM5 / en31 / WT to AlphaFold3 Server** in browser for criterion 1's second-predictor confirmation.
-4. Run **Protein2PAM** on PLM5 / en31 / WT for the predicted PAM tolerance profile (criterion 2).
+1. **§2.4 Protein2PAM scan** (web service at protein2pam.profluent.bio; ~10 min browser task; license cleared). PLM5 / en31 / WT predicted PAM PWM comparison — closes the last criterion.
+2. **§2.1 AlphaFold3 Server submissions** (user browser task at alphafoldserver.com) for PLM5 / en31 / WT — closes criterion 1's second-predictor leg from a fully independent source. Token budget (~1,761 per job) fits the 5,000-token AF3 Server cap. Chai-1 was investigated and ruled out (bf16-only; V100-incompatible).
 
 **Terminal step (PI-gated, after robustness phase passes):**
 
-- **Wet-lab handoff** of FnCas9-PLM5 — in-vitro cleavage assay alongside WT and en31 controls. Bring to the PI only after the four pending robustness items above are green.
+- **Wet-lab handoff** of FnCas9-PLM5 — in-vitro cleavage assay alongside WT and en31 controls. Bring to the PI only after the two pending robustness items above are green.
 
 **Longer-term, independent of wet-lab outcome:**
 
