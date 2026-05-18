@@ -38,6 +38,9 @@ Verification rounds:
 | 25 | PDB 5B2P: WT FnCas9, TGA PAM | CONFIRMED | RCSB |
 | 26 | PDB 5B2Q: FnCas9 RHA variant | CONFIRMED with note | 5B2Q DNA is bound with TGG PAM (not 5'-YG-3') |
 | 27 | US patent 11,970,699 B2 exists, claims enFnCas9 | CONFIRMED (metadata) | Title "Kinetically enhanced engineered FnCas9 and its uses thereof"; inventors include Chakraborty, Maiti, Acharya, Nureki, Nishimasu, Hirano; assignees CSIR + Univ. Tokyo. Full claim text not retrieved. |
+| 28 | PMC reference for primary-source full text of Acharya 2024 | ADDED 2026-05-18 | **PMC11213958** is the correct PMC for PMID 38942756. (Round 1 cited "paper text snippet via Google indexing" without a PMC ID — formally confirmed during 2026-05-18 residue-identity re-verification via plm-scout and patent US11970699B2 SEQ ID NOs.) |
+| 29 | PDB 5B2O chain A resolution range | ADDED 2026-05-18 | Chain A ATOM records cover residues **1–1622**; the C-terminal tail 1623–1629 is unresolved in the deposited structure. All campaign engineered positions (max 1617) are within the resolved region. SEQRES includes 3 N-terminal cloning-tag residues (GSH) at PDB positions −2 to 0, which do not shift author numbering — DBREF maps PDB 1–1629 → UniProt A0Q5Y3 1–1629 1:1 (zero offset). |
+| 30 | Residue identities and numbering for all 12 campaign positions (re-verified 2026-05-18) | RE-CONFIRMED | Triple-independent check (FASTA / PDB ATOM / paper+patent) for positions 1243, 1249, 1292, 1325, 1341, 1369, 1449, 1479, 1507, 1535, 1603, 1617. All WT residues match (G, Y, C, A, Y, E, E, K, W, T, E, M). No off-by-N error in any of our scripts or the deck. Sources: data/raw/A0Q5Y3_fncas9.fasta, data/raw/5B2O.pdb, PMC11213958, US11970699B2. |
 
 ## Round 1 — PLM-nuclease engineering draft
 
@@ -401,3 +404,38 @@ This section records empirical findings from our own runs (not literature). Each
   - **Falsifiable corollary for §2.5:** ThermoMPNN-D predicts en31's stability is ~half cooperative (−1.4 kcal/mol coupling) and ~half single-residue (+0.2 additive). If en31's single mutants are tested individually wet-lab, they should be near-WT alone but combine non-additively. PLM5 by contrast should look near-additive — each single mutant should contribute roughly its predicted apo-ΔΔG independently. This is a clean wet-lab-testable prediction independent of PLM5's overall PAM-relaxation question.
 
 - **Caveats:** (a) ThermoMPNN-D is one structural-thermodynamics model; the in-vitro stability gain it predicts for en31 has not been independently validated by another epistasis-aware method. (b) The 5 out-of-distance PLM5 pairs (>15 Å) were not actually measured by the coupled head; the spatial-independence argument predicts their epistasis would be ≈0 if they had been, but this is by ThermoMPNN-D's design choice, not direct measurement. A future check with a longer-range coupling model (e.g., ESM-IF1 multi-mutation log-likelihood differences) could close that gap.
+
+### 2026-05-18 — single-point Boltz E1449L vs E1449H (§2.5 falsifiable prediction)
+
+- **Run dir:** `results/runs/2026-05-18_boltz_e1449/` (SLURM job 221040 on tejas, COMPLETED 0:0, ~30 min wall).
+- **Reproduces with:** `hpc/slurm/04c_boltz_e1449.sbatch`. V100, MSA-on (`--use_msa_server`), 5 diffusion samples × 2 single-point variants on WT backbone, `--truncate 1230-1620`.
+- **Variants:** WT FnCas9 + single mutation E1449H (the residue in en31) vs WT FnCas9 + single mutation E1449L (the PLM-favored choice — ESM-2 ranked L; LigandMPNN top non-WT pick at 1449 was L with pooled freq 0.985).
+- **Analysis:** `scripts/boltz_analyze.py --run-dir results/runs/2026-05-18_boltz_e1449` (generalized 2026-05-18 to auto-detect variant slugs).
+
+- **Confidence summary (mean ± σ across 5 diffusion samples):**
+
+  | metric | E1449H (Acharya) | E1449L (PLM-favored) | Δ (L − H) |
+  |---|---|---|---|
+  | iPTM (all interfaces) | **0.926 ± 0.040** | **0.912 ± 0.077** | −0.014 |
+  | complex_iplddt | 0.910 ± 0.005 | 0.908 ± 0.013 | −0.002 |
+  | pTM (whole complex) | 0.923 ± 0.034 | 0.915 ± 0.058 | −0.008 |
+  | pTM (protein chain) | 0.940 ± 0.019 | 0.937 ± 0.028 | −0.003 |
+  | **iPTM prot↔DNA-PAM** | **0.924 ± 0.030** | **0.919 ± 0.050** | **−0.005** |
+  | iPTM prot↔DNA-target | 0.914 ± 0.035 | 0.908 ± 0.056 | −0.006 |
+  | iPTM prot↔sgRNA | 0.928 ± 0.041 | 0.903 ± 0.102 | −0.025 |
+  | per-res pLDDT @ 1449 | 0.951 | 0.954 | +0.003 |
+
+- **Headline finding: Boltz cannot statistically discriminate the two variants on any global confidence metric.** Every Δ is within 1σ of E1449H's σ (which is itself the tighter of the two distributions). The functional protein↔DNA-PAM interface — the regime where en31's wet-lab gain lives — shows Δ = −0.005, indistinguishable from zero relative to either variant's σ.
+
+- **The interesting signal: E1449L has ~2× higher prediction variance.** σ on overall iPTM: 0.077 (L) vs 0.040 (H). σ on protein↔sgRNA iPTM: 0.102 (L) vs 0.041 (H). σ on protein↔DNA-PAM iPTM: 0.050 (L) vs 0.030 (H). The mean structures are equivalent; Boltz commits to them with different confidence. One diffusion sample for E1449L appears to produce a substantially lower-quality structure (visible in the sgRNA-interface tail), which is what inflates the σ — the other 4 are en31-class.
+
+- **Per-residue pLDDT at the engineered position itself: indistinguishable.** Boltz scores residue 1449 at 0.951 (H) vs 0.954 (L) — local fold quality is identical regardless of which side chain occupies the position.
+
+- **Interpretation for the §2.5 falsifiable claim:**
+  - **In-silico prediction recorded:** Boltz-2 predicts E1449H and E1449L are structurally equivalent at the WT-backbone single-point level. The PLM consensus (ESM-2 + LigandMPNN preferring L) is consistent with Boltz's view that L is structurally fine — it's not a pathological pick.
+  - **Falsifiable wet-lab test:** if a head-to-head in-vitro assay finds E1449L ≥ E1449H in cleavage activity, the PLM consensus was correct on a structurally-relevant axis. If E1449H >> E1449L, the gap is in something Boltz at single mutations cannot see (kinetics, off-target trade-offs, or — most likely per §2.3 — the stabilizing **cooperation** with G1243T and E1369R that exists in en31 but not in a single E1449H WT-background mutant). The §2.3 ThermoMPNN-D finding predicted exactly this: en31's signal is partly cooperative; isolating any single en31 mutation removes that cooperation.
+  - **Cross-method convergence at position 1449:** ESM-2 → L; LigandMPNN → L (0.985); Boltz → L ≈ H (within noise). Three methods agree L is at least as good structurally; Acharya's directed evolution chose H, presumably because the COMBO with G1243T + E1369R was selected, not the isolated single mutation. This is consistent with §2.3.
+
+- **§2.5 status: ✅ DONE.** Plan §6 success-criterion 5 (falsifiable predictions on record with CI) is met — recorded above with σ over 5 diffusion samples for every metric and per-residue pLDDT at the engineered position. The PI-gate moves from 3 of 5 to **4 of 5 ✅**. Only §2.4 (Protein2PAM functional gap) remains open; §2.1's second-predictor leg (AF3 Server / Chai-1) is still partially open as well.
+
+- **Caveats:** (a) Single-point on WT background — does not probe E1449L in the PLM5 quadruple context (where it would need to be designed). (b) Boltz-2 was the only predictor here; ideally a second-predictor confirmation (Chai-1 on the same two variants) would strengthen the structural-equivalence claim. (c) The variance asymmetry (L is noisier than H) could indicate either (i) L genuinely has slightly more conformational flexibility, or (ii) one bad diffusion sample for L — running with 25 samples would distinguish.

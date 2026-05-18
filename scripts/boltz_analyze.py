@@ -186,6 +186,10 @@ def main() -> int:
                         help="End of UniProt range used in the YAML")
     parser.add_argument("--no-per-residue", action="store_true",
                         help="Skip per-residue pLDDT analysis")
+    parser.add_argument("--variants", default=None,
+                        help="Comma-separated variant slugs (default: auto-detect "
+                             "fncas9_* subdirs of --run-dir). Example: "
+                             "'fncas9_e1449l,fncas9_e1449h'")
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
@@ -193,13 +197,26 @@ def main() -> int:
         log.error("No such dir: %s", run_dir)
         return 1
 
-    variants = ["fncas9_wt", "fncas9_plm3", "fncas9_plm5", "fncas9_en31"]
-    nice_names = {
-        "fncas9_wt":   "WT",
-        "fncas9_plm3": "PLM3",
-        "fncas9_plm5": "PLM5",
-        "fncas9_en31": "en31",
-    }
+    if args.variants:
+        variants = [v.strip() for v in args.variants.split(",")]
+    else:
+        # Auto-detect fncas9_* subdirs that contain a Boltz results tree
+        variants = sorted([
+            p.name for p in run_dir.iterdir()
+            if p.is_dir() and p.name.startswith("fncas9_")
+            and list(p.glob("boltz_results_*/predictions/boltz_*/"))
+        ])
+        if not variants:
+            log.error("No fncas9_* result subdirs found under %s", run_dir)
+            return 1
+        log.info("Auto-detected variants: %s", ", ".join(variants))
+
+    nice_names = {v: v.replace("fncas9_", "").upper() for v in variants}
+    # Special-case common slug → label mappings (preserves old behavior)
+    SPECIAL = {"fncas9_wt": "WT", "fncas9_plm3": "PLM3", "fncas9_plm4": "PLM4",
+               "fncas9_plm5": "PLM5", "fncas9_en31": "en31",
+               "fncas9_e1449l": "E1449L", "fncas9_e1449h": "E1449H"}
+    nice_names.update({k: v for k, v in SPECIAL.items() if k in variants})
 
     summaries: dict[str, dict] = {}
     plddt_arrays: dict[str, list] = {}

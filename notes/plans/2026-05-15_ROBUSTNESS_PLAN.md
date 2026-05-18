@@ -145,6 +145,8 @@ Compare interface iPTM, per-residue pLDDT at position 1449, and local contact ge
 
 **Success criterion.** Clear directional prediction with confidence intervals, suitable for inclusion in the methods-comparison pre-print as a falsifiable wet-lab handoff.
 
+**Status: ✅ DONE 2026-05-18.** SLURM job 221040. Boltz-2 verdict: E1449L ≈ E1449H within prediction noise on all global metrics; per-residue pLDDT at 1449 indistinguishable (0.954 L vs 0.951 H). E1449L has ~2× higher prediction variance — mean is fine, confidence less consistent. Three-method convergence at 1449 (ESM-2 → L; LigandMPNN → L; Boltz → L ≈ H) is the in-silico prediction of record. The functional gap, if any, between H and L lives in either kinetics or — most likely per §2.3 — cooperation with G1243T + E1369R in the en31 triple that single-mutation in-silico cannot see. Full data: `notes/plm/verification-log.md` → "2026-05-18 — single-point Boltz E1449L vs E1449H".
+
 ---
 
 ## 3. Recommended phased execution
@@ -173,7 +175,7 @@ V100-equivalent hours (rough):
 | §2.2 PLM4 Boltz + ThermoMPNN | ~1 hr (ThermoMPNN is fast) |
 | §2.3 epistasis (ThermoMPNN-D, was-Boltz) | ~0.5 hr ✅ DONE (PLM5 PASS, no Boltz follow-up needed) |
 | §2.4 PAM-variant scan (~18 Boltz runs) | ~3 hr |
-| §2.5 E1449L / E1449H predictions | ~0.5 hr |
+| §2.5 E1449L / E1449H predictions | ~0.5 hr ✅ DONE (Boltz cannot discriminate; mean identical, σ 2× higher for L) |
 | **Total** | **~12–15 hr V100** + analysis |
 
 Doable across **2–3 productive sessions** if the HPC queue is friendly.
@@ -199,7 +201,7 @@ The campaign is **robust enough to bring to the PI** for wet-lab planning when *
 2. ☐ **The functional gap is closed** — PLM5 has either a Protein2PAM-predicted PAM-tolerance profile expanding beyond NGG, or a Boltz PAM-variant scan showing the same.
 3. ✅ **The apo-ΔΔG filter calls are independently bracketed** (2026-05-15). ThermoMPNN cross-check + direct Boltz on PLM4 both refute the proteinmpnn_ddg rejection of PLM4 → the filter is miscalibrated for hydrophobic↔K and certain polar↔hydrophobic substitutions. The filter is OK as triage but is NOT a sole gate; confirm rejections with a second ΔΔG method or Boltz.
 4. ✅ **Pairwise epistasis effects are characterized** (2026-05-15). ThermoMPNN-D on all 9 candidate pairs: PLM5's |Σ epistasis| / |Σ additive| = **0.019** (2% — operationally safe); en31's ratio = 7.1× (its stability gain is mostly cooperative — explains the wet-lab signal). The independence assumption used by the campaign's per-position PSSM scoring holds for PLM5's spatially-distributed mutation geometry. Bonus: gives a falsifiable wet-lab prediction (en31 singles non-additive, PLM5 singles ~additive) for §2.5.
-5. ☐ **The E1449L vs E1449H falsifiable prediction** is on record with confidence intervals.
+5. ✅ **The E1449L vs E1449H falsifiable prediction** is on record with confidence intervals (2026-05-18, SLURM job 221040). Boltz-2 cannot statistically discriminate the two (Δ iPTM = −0.014; Δ prot↔DNA-PAM iPTM = −0.005; per-residue pLDDT at 1449 essentially identical at 0.954 L vs 0.951 H). E1449L has ~2× higher prediction variance (σ 0.050 vs 0.030 on PAM iPTM) — mean equivalent, confidence asymmetric. Wet-lab head-to-head would distinguish whether Acharya's directed-evolution choice of H captures function that single-mutation in-silico cannot see (most likely cooperative effects with G1243T + E1369R, per §2.3). Full data in `notes/plm/verification-log.md` → "2026-05-18 — single-point Boltz E1449L vs E1449H".
 
 When 1–5 are green, the candidate is ready for the PI / wet-lab conversation.
 
