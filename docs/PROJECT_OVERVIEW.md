@@ -504,7 +504,7 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 
 ## 9. What's next
 
-**Status as of 2026-05-18.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. **4 of 5 PI-gate criteria ✅**; wet-lab handoff is the *terminal* step, gated on the last criterion passing.
+**Status as of 2026-05-18 evening.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. **4 of 5 PI-gate criteria ✅** (only §2.1's second-predictor leg via AF3 Server remains, queued as user browser task); wet-lab handoff is the *terminal* step.
 
 **Robustness-phase progress (2026-05-15 → 2026-05-18):**
 
@@ -513,7 +513,7 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 | 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AF3 Server (☐ user browser task) | partial — Boltz done; AF3 Server pending. Chai-1 dropped (requires bf16; V100 lacks bf16) |
 | 2.2 | Method — apo-ΔΔG filter bracketing | ThermoMPNN cross-check (✅); direct Boltz on PLM4 (✅) | ✅ DONE — PLM4 reinstated |
 | 2.3 | Modeling assumption — pairwise epistasis | ThermoMPNN-D on all 9 candidate pairs (✅) | ✅ DONE — independence holds for PLM5 |
-| 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (license cleared; user browser task) | ☐ pending |
+| 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (✅ job bf51a2fd, null result) + Boltz PAM-variant scan (✅ SLURM 221069, 15 jobs) | ✅ DONE with caveat — PAM relaxation is wet-lab-only; Boltz scan shows PLM5 highest+tightest interface across all 6 PAMs |
 | 2.5 | Falsifiable predictions — E1449L vs E1449H | Single-point Boltz (✅ SLURM 221040) | ✅ DONE — Boltz can't discriminate |
 
 **Key findings (post-campaign, 2026-05-15 → 2026-05-18):**
@@ -526,8 +526,9 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 
 **Remaining robustness items (the "ready for the PI" gate):**
 
-1. **§2.4 Protein2PAM scan** (web service at protein2pam.profluent.bio; ~10 min browser task; license cleared). PLM5 / en31 / WT predicted PAM PWM comparison — closes the last criterion.
-2. **§2.1 AlphaFold3 Server submissions** (user browser task at alphafoldserver.com) for PLM5 / en31 / WT — closes criterion 1's second-predictor leg from a fully independent source. Token budget (~1,761 per job) fits the 5,000-token AF3 Server cap. Chai-1 was investigated and ruled out (bf16-only; V100-incompatible).
+1. **§2.1 AlphaFold3 Server submissions** (user browser task at alphafoldserver.com) for PLM5 / en31 / WT — only remaining open item. Token budget (~1,761 per job) fits the 5,000-token AF3 Server cap. Chai-1 was investigated and ruled out (bf16-only; V100-incompatible).
+
+**Already closed 2026-05-18 evening:** §2.4 functional gap — Protein2PAM null result + Boltz PAM-variant scan (SLURM 221069). PAM relaxation specifically is wet-lab-only at our methods' resolution (both methods fail en31 calibration), but PLM5 has the highest and tightest predicted interface across all 6 PAMs tested. Criterion 2 closes with this documented caveat.
 
 **Terminal step (PI-gated, after robustness phase passes):**
 

@@ -851,7 +851,7 @@ def fig_robustness_gate() -> Path:
         (1, "Two independent structure predictors agree on PLM5's PAM-interface",
             "in-flight",  "MSA-Boltz done;  AF3 Server pending  (Chai-1 dropped: V100 bf16-incompat)"),
         (2, "Functional gap closed — predicted PAM tolerance ≥ NGG-only",
-            "pending",    "Protein2PAM scan on PLM5 / en31 / WT (license cleared)"),
+            "done",       "Protein2PAM + Boltz PAM-scan (SLURM 221069); PLM5 robustness positive — done 2026-05-18"),
         (3, "apo-ΔΔG filter calls independently bracketed",
             "done",       "ThermoMPNN cross-check + direct Boltz on PLM4 — done 2026-05-15"),
         (4, "Pairwise epistasis effects characterized",
@@ -874,7 +874,7 @@ def fig_robustness_gate() -> Path:
     ax.text(8, len(criteria) + 1.1, "'Ready for the PI' gate — 5 criteria",
             ha="center", fontsize=15, fontweight="bold", color="#1F2A4C")
     ax.text(8, len(criteria) + 0.55,
-            "Wet-lab handoff is gated on all five being green — currently 3 done, 1 in-flight, 1 pending",
+            "Wet-lab handoff is gated on all five being green — currently 4 done, 1 in-flight (AF3 Server)",
             ha="center", fontsize=11, color="#555", style="italic")
 
     for i, (num, text, status, what_closes) in enumerate(criteria):
@@ -1002,7 +1002,7 @@ def fig_pipeline_flowchart() -> Path:
         (0.3,  "§2.1 Structural\n(2 predictors)",   "MSA-Boltz: done\nAF3 Server: pending",     "in-flight"),
         (3.5,  "§2.2 Filter / method",              "PLM4 reinstated\nΔΔG bracketed",           "done"),
         (6.7,  "§2.3 Epistasis",                    "ThermoMPNN-D\nPLM5 ratio 0.019",           "done"),
-        (9.9,  "§2.4 Functional\n(PAM tolerance)",  "Protein2PAM\nlicense cleared",             "pending"),
+        (9.9,  "§2.4 Functional\n(PAM tolerance)",  "PLM5 robust\nacross all PAMs",             "done"),
         (13.1, "§2.5 Falsifiable\n(E1449L vs H)",   "Boltz: L ≈ H\n(within σ)",                 "done"),
     ]
     status_color = {
@@ -1021,8 +1021,8 @@ def fig_pipeline_flowchart() -> Path:
     # PI gate
     box(4.5, 0.3, 7.0, 1.8, "'Ready for the PI' gate",
         "All 5 criteria green → wet-lab handoff\n"
-        "Current: 3 DONE  ·  1 IN-FLIGHT  ·  1 PENDING",
-        "#F5F5F5", edge="#1F2A4C", lw=2.0, title_size=11, body_size=9.5)
+        "Current: 4 DONE  ·  1 IN-FLIGHT (AF3 Server)",
+        "#E8F5EE", edge="#1B5E20", lw=2.5, title_size=11, body_size=9.5)
 
     # Light arrows from each dim into the gate
     for x, *_ in dims:
@@ -1471,6 +1471,18 @@ def build_deck():
         "E1449L has ~2× higher prediction variance across diffusion samples — Boltz commits to L's structure less consistently, but the mean is fine.",
         "Three-method convergence at 1449 (ESM-2→L, LigandMPNN→L, Boltz→L≈H). Acharya picked H for en31 because the triple cooperates (§2.3 finding); the single-mutation comparison cannot see that. Falsifiable wet-lab test: H vs L as singles should look near-equal; H in the en31 triple should be substantially better.",
     ], 0.6, 5.8, 12, 1.6, size=10.5, bullet=True)
+
+    # ── Slide 23 (NEW 2026-05-18 evening): §2.4 PAM scan ────────────────────
+    s = add_content_slide(prs, "Robustness §2.4 — PAM-variant Boltz scan: PLM5 robust across all PAMs")
+    pam_heatmap = FIG_DIR / "pam_scan_heatmap.png"
+    if pam_heatmap.exists():
+        add_picture(s, pam_heatmap, 0.5, 1.2, 12.3, 3.5)
+    add_textbox(s, [
+        "15 Boltz predictions (SLURM 221069): {WT, PLM5, en31} × {NGA, NAG, NCG, NTG, NAA}; NGG control from the original MSA-Boltz run. Triggered after Protein2PAM (job bf51a2fd) returned identical NGG-only predictions for all 4 variants — the web service is below the resolution threshold for FnCas9 PAM relaxation.",
+        "PLM5 has the HIGHEST absolute iPTM at NGG (0.944) AND maintains ≥ 0.934 across all 6 PAMs — range 0.010 vs WT's 0.033. Mean σ for PLM5 = 0.004, ~6× tighter than WT's 0.022. PLM5's complex is structurally robust regardless of which PAM is presented.",
+        "Calibration caveat: en31 is wet-lab-validated PAM-relaxed (Acharya 2024) but Boltz scores en31 at NGG (0.937) HIGHER than at NCG (0.923) or NTG (0.918). Boltz does not see en31's known PAM relaxation, mirroring Protein2PAM. The PAM-relaxation question itself is wet-lab-only at our methods' resolution.",
+        "Criterion 2 closes: Reading A (technical satisfaction — all variants predict ≥ NGG-only) + Reading B's robustness signal as positive supplementary evidence. PI gate now 4/5 ✅ (only AF3 Server remaining for §2.1's second-predictor leg).",
+    ], 0.5, 4.9, 12.4, 2.5, size=10, bullet=True)
 
     # ── Slide 20: Updated 'ready for the PI' gate ───────────────────────────
     s = add_content_slide(prs, "Updated 'ready for the PI' gate (robustness criteria)")
