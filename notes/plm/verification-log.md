@@ -439,3 +439,30 @@ This section records empirical findings from our own runs (not literature). Each
 - **§2.5 status: ✅ DONE.** Plan §6 success-criterion 5 (falsifiable predictions on record with CI) is met — recorded above with σ over 5 diffusion samples for every metric and per-residue pLDDT at the engineered position. The PI-gate moves from 3 of 5 to **4 of 5 ✅**. Only §2.4 (Protein2PAM functional gap) remains open; §2.1's second-predictor leg (AF3 Server / Chai-1) is still partially open as well.
 
 - **Caveats:** (a) Single-point on WT background — does not probe E1449L in the PLM5 quadruple context (where it would need to be designed). (b) Boltz-2 was the only predictor here; ideally a second-predictor confirmation (Chai-1 on the same two variants) would strengthen the structural-equivalence claim. (c) The variance asymmetry (L is noisier than H) could indicate either (i) L genuinely has slightly more conformational flexibility, or (ii) one bad diffusion sample for L — running with 25 samples would distinguish.
+
+### 2026-05-18 — Protein2PAM scan (§2.4): null result, triggers Boltz PAM-variant scan fallback
+
+- **Job:** Protein2PAM job `bf51a2fd` via the web service at `protein2pam.profluent.bio` (Profluent, Nayfach et al. 2026, *Nat Biotechnol*). User submitted 4 sequences (WT, PLM4, PLM5, en31) via the FASTA Input form. Note on submission: the multi-line FASTA wrapping at 80 chars confuses Protein2PAM's parser (it counts wrapped lines as separate sequences and rejects >10); switching to **single-line-per-sequence FASTA** resolved the error. The campaign's clean-FASTA file is `data/browser_submissions/protein2pam_oneline.fasta`. Result files saved to `data/browser_submissions/protein2pam_output/` as per-variant TSVs + logo PNGs.
+
+- **Result — Protein2PAM cannot resolve our variants:**
+
+  | Variant | PAM consensus | Confidence | P(NGG) | P(non-NGG, NGA+NAG) | Σ H (10 pos, bits) |
+  |---|---|---|---|---|---|
+  | WT | NGG | High (0.926) | 0.929 | 0.047 | 14.37 |
+  | PLM4 | NGG | High (0.920) | 0.927 | 0.051 | 14.46 |
+  | **PLM5** | NGG | High (0.921) | 0.928 | 0.050 | 14.37 |
+  | en31 (calibration anchor) | NGG | High (0.919) | 0.931 | 0.047 | 14.35 |
+
+  Pairwise PWM differences across all 40 cells: mean absolute difference 0.014–0.023 per cell; max 0.11. The variants are operationally indistinguishable to Protein2PAM.
+
+- **The load-bearing observation: Protein2PAM mis-calls en31.** en31 is wet-lab-validated to broaden NGG → NGG/NGA/NAG (Acharya 2024, ~3.5× target-site expansion). Protein2PAM predicts en31 = NGG-only with P(NGG) = 0.931, identical to WT. **The model is below the resolution threshold required to detect FnCas9 PAM relaxation.** This is consistent with Protein2PAM's own published FnCas9 in-vitro-vs-predicted similarity of sim = 0.747 (moderate-confidence regime; the Methods page on the Profluent website reports SpCas9 sim = 0.984 for comparison — Protein2PAM is well-calibrated for SpCas9 but coarse on FnCas9).
+
+- **Two valid interpretations for criterion 2:**
+  1. **Reading A (technically satisfied):** The criterion text is "predicted PAM tolerance ≥ NGG-only". All variants predict NGG (≥ NGG-only). Reading literally, criterion 2 is ✅ with caveat. PLM5 is predicted equivalent to en31 by this method; since en31 is wet-lab-validated PAM-relaxed, "PLM5 ≥ en31 in PAM tolerance" follows by symmetry of the method's blindness.
+  2. **Reading B (criterion needs a direct test):** Protein2PAM is too coarse for our question. Trigger the §2.4 fallback — Boltz-2 PAM-variant scan: predict the full complex with each of {NGA, NAG, NCG, NTG, NAA} for each of {WT, PLM5, en31}. 15 new Boltz jobs; the NGG control runs are already in `results/runs/2026-05-15_boltz_complex/`. Positive evidence if PLM5 + non-NGG PAMs scores closer to PLM5 + NGG than WT + non-NGG does (i.e. PLM5's complex tolerates alternative PAMs better than WT's does).
+
+- **Decision (user-confirmed 2026-05-18):** **Execute Reading B.** Reading A alone leaves criterion 2 as the weakest link in the PI gate; the direct test is achievable in ~2.5 hours of HPC compute and gives a positive functional signal rather than a non-rejection. New artifacts:
+  - `scripts/prepare_boltz_pam_scan_yamls.py` — generates 15 YAMLs ({WT, PLM5, en31} × 5 non-NGG PAMs) with proper chain-D (PAM strand) and chain-C (target strand, anti-parallel reverse-complement positions 7–9) edits. Position 1 of the PAM kept as T (the "N" — unconstrained nucleotide).
+  - `hpc/slurm/04d_boltz_pam_scan.sbatch` — single-sbatch with skip-existing resume support; --time=04:00:00 buffer over the ~2.5 hr expected wall time.
+
+- **§2.4 status (end-of-2026-05-18 afternoon, before Boltz scan):** Protein2PAM Reading A satisfied with caveat; Reading B (Boltz scan) queued. PI-gate criterion 2 will flip to ✅ when the scan's analysis lands.
