@@ -800,11 +800,56 @@ def fig_cross_method_plm4() -> Path:
     return path
 
 
+def fig_e1449_comparison() -> Path:
+    """§2.5 result — E1449L vs E1449H single-point Boltz, with en31 (which carries E1449H
+    in the triple context) as reference. Headline: Boltz cannot discriminate the two on any
+    global metric; E1449L has ~2× higher variance across diffusion samples.
+    """
+    # Mean ± σ across 5 MSA-Boltz diffusion samples (run 2026-05-18_boltz_e1449)
+    # en31 reference values from the 2026-05-15 MSA-Boltz apples-to-apples run
+    metrics = [
+        ("iPTM\n(all interfaces)",   {"E1449H": (0.926, 0.040), "E1449L": (0.912, 0.077), "en31 (ref)": (0.940, 0.009)}),
+        ("complex iplddt",            {"E1449H": (0.910, 0.005), "E1449L": (0.908, 0.013), "en31 (ref)": (0.909, 0.002)}),
+        ("iPTM\nprot↔DNA-PAM",        {"E1449H": (0.924, 0.030), "E1449L": (0.919, 0.050), "en31 (ref)": (0.927, 0.009)}),
+        ("per-res pLDDT\n@ position 1449", {"E1449H": (0.951, 0.0), "E1449L": (0.954, 0.0), "en31 (ref)": (0.955, 0.0)}),
+    ]
+    variants = ["E1449H", "E1449L", "en31 (ref)"]
+    colors = {"E1449H": COLOR_EN31, "E1449L": COLOR_PLM5, "en31 (ref)": "#888"}
+
+    fig, axes = plt.subplots(1, 4, figsize=(15, 5), dpi=160)
+    for ax, (mname, vals) in zip(axes, metrics):
+        means = [vals[v][0] for v in variants]
+        stds = [vals[v][1] for v in variants]
+        bar_colors = [colors[v] for v in variants]
+        bars = ax.bar(variants, means, yerr=stds, color=bar_colors,
+                      edgecolor="black", linewidth=0.6, capsize=4,
+                      error_kw={"elinewidth": 1.0, "ecolor": "#333"})
+        for b, m, s in zip(bars, means, stds):
+            ax.text(b.get_x() + b.get_width()/2, m + max(s, 0.005) + 0.003,
+                    f"{m:.3f}", ha="center", fontsize=9.5, fontweight="bold")
+        ax.set_title(mname, fontsize=10.5, pad=8)
+        ax.set_ylim(0.84, 1.00)
+        ax.tick_params(axis="x", labelsize=9)
+        ax.grid(axis="y", linewidth=0.3, alpha=0.4)
+        ax.set_axisbelow(True)
+
+    axes[0].set_ylabel("Confidence (mean ± σ, 5 samples)", fontsize=10)
+    fig.suptitle("§2.5 — E1449L vs E1449H single-point Boltz on WT backbone\n"
+                 "Means within 1σ on every metric · E1449L has ~2× higher prediction variance · per-res pLDDT @1449 indistinguishable",
+                 fontsize=12, fontweight="bold", y=1.03)
+    plt.tight_layout()
+    path = FIG_DIR / "e1449_comparison.png"
+    plt.savefig(path, dpi=160, bbox_inches="tight")
+    plt.close()
+    log.info("wrote %s", path)
+    return path
+
+
 def fig_robustness_gate() -> Path:
     """5-criterion 'ready for the PI' gate checklist visual."""
     criteria = [
         (1, "Two independent structure predictors agree on PLM5's PAM-interface",
-            "in-flight",  "MSA-Boltz done;  AF3 Server / Chai-1 pending"),
+            "in-flight",  "MSA-Boltz done;  AF3 Server pending  (Chai-1 dropped: V100 bf16-incompat)"),
         (2, "Functional gap closed — predicted PAM tolerance ≥ NGG-only",
             "pending",    "Protein2PAM scan on PLM5 / en31 / WT (license cleared)"),
         (3, "apo-ΔΔG filter calls independently bracketed",
@@ -812,7 +857,7 @@ def fig_robustness_gate() -> Path:
         (4, "Pairwise epistasis effects characterized",
             "done",       "ThermoMPNN-D — PLM5 |Σ ep|/|Σ add| = 0.019 — done 2026-05-15"),
         (5, "Falsifiable predictions on record (E1449L vs E1449H) with CI",
-            "in-flight",  "Single-point Boltz E1449L / E1449H (~30 min V100) — queued"),
+            "done",       "Boltz can't discriminate (ΔiPTM −0.014, within σ) — done 2026-05-18"),
     ]
     status_color = {
         "done":      "#1B5E20",
@@ -829,7 +874,7 @@ def fig_robustness_gate() -> Path:
     ax.text(8, len(criteria) + 1.1, "'Ready for the PI' gate — 5 criteria",
             ha="center", fontsize=15, fontweight="bold", color="#1F2A4C")
     ax.text(8, len(criteria) + 0.55,
-            "Wet-lab handoff is gated on all five being green — currently 2 done, 2 in-flight, 1 pending",
+            "Wet-lab handoff is gated on all five being green — currently 3 done, 1 in-flight, 1 pending",
             ha="center", fontsize=11, color="#555", style="italic")
 
     for i, (num, text, status, what_closes) in enumerate(criteria):
@@ -954,11 +999,11 @@ def fig_pipeline_flowchart() -> Path:
 
     # 5 dimension chips
     dims = [
-        (0.3,  "§2.1 Structural\n(2 predictors)",   "MSA-Boltz: done\nAF3 / Chai-1: pending",   "in-flight"),
+        (0.3,  "§2.1 Structural\n(2 predictors)",   "MSA-Boltz: done\nAF3 Server: pending",     "in-flight"),
         (3.5,  "§2.2 Filter / method",              "PLM4 reinstated\nΔΔG bracketed",           "done"),
         (6.7,  "§2.3 Epistasis",                    "ThermoMPNN-D\nPLM5 ratio 0.019",           "done"),
         (9.9,  "§2.4 Functional\n(PAM tolerance)",  "Protein2PAM\nlicense cleared",             "pending"),
-        (13.1, "§2.5 Falsifiable\n(E1449L vs H)",   "Boltz queued\n~30 min V100",               "in-flight"),
+        (13.1, "§2.5 Falsifiable\n(E1449L vs H)",   "Boltz: L ≈ H\n(within σ)",                 "done"),
     ]
     status_color = {
         "done":      ("#E8F5EE", "#1B5E20"),
@@ -976,7 +1021,7 @@ def fig_pipeline_flowchart() -> Path:
     # PI gate
     box(4.5, 0.3, 7.0, 1.8, "'Ready for the PI' gate",
         "All 5 criteria green → wet-lab handoff\n"
-        "Current: 2 DONE  ·  2 IN-FLIGHT  ·  1 PENDING",
+        "Current: 3 DONE  ·  1 IN-FLIGHT  ·  1 PENDING",
         "#F5F5F5", edge="#1F2A4C", lw=2.0, title_size=11, body_size=9.5)
 
     # Light arrows from each dim into the gate
@@ -1095,6 +1140,8 @@ def build_deck():
     fig_struct = fig_structural_3d()
     fig_plddt = fig_plddt_line_plot()
     fig_dist = fig_distance_heatmap()
+    # §2.5 result figure (added 2026-05-18)
+    fig_e1449 = fig_e1449_comparison()
 
     log.info("\nBuilding deck...")
     prs = Presentation()
@@ -1414,6 +1461,16 @@ def build_deck():
         "Right: PLM5's four positions distribute across the domain — by construction (PSSM-driven, per-position selection naturally avoids clustering).",
         "This is the design choice, not a methodological blind spot: PLM5 cannot benefit from the kind of stabilizing cooperation that boosts en31, but it does not need to.",
     ], 0.6, 6.7, 12, 0.7, size=10.5, bullet=True)
+
+    # ── Slide 22 (NEW 2026-05-18): §2.5 falsifiable E1449L vs E1449H ────────
+    s = add_content_slide(prs, "Robustness §2.5 — falsifiable: Boltz can't discriminate E1449L from E1449H")
+    add_picture(s, fig_e1449, 0.2, 1.05, 12.9, 4.6)
+    add_textbox(s, [
+        "Single-point Boltz on WT backbone (SLURM 221040, 2026-05-18). E1449H = the residue Acharya 2024 chose for en31. E1449L = the residue both ESM-2 and LigandMPNN preferred (freq 0.985).",
+        "Every metric Δ is within 1σ of E1449H's σ. Per-residue pLDDT at the engineered position itself: 0.951 (H) vs 0.954 (L) — Boltz sees them as structurally equivalent in isolation.",
+        "E1449L has ~2× higher prediction variance across diffusion samples — Boltz commits to L's structure less consistently, but the mean is fine.",
+        "Three-method convergence at 1449 (ESM-2→L, LigandMPNN→L, Boltz→L≈H). Acharya picked H for en31 because the triple cooperates (§2.3 finding); the single-mutation comparison cannot see that. Falsifiable wet-lab test: H vs L as singles should look near-equal; H in the en31 triple should be substantially better.",
+    ], 0.6, 5.8, 12, 1.6, size=10.5, bullet=True)
 
     # ── Slide 20: Updated 'ready for the PI' gate ───────────────────────────
     s = add_content_slide(prs, "Updated 'ready for the PI' gate (robustness criteria)")
