@@ -83,6 +83,11 @@ results/runs/**/*.cif
 results/runs/**/inputs/*.pdb
 results/runs/**/inputs/*.cif
 
+# AF3 Server outputs — large binary CIFs + JSON/MSA bundles (~150 MB per variant).
+# Provenance lives in notes/plm/verification-log.md (per-ZIP SHA-256); the raw outputs
+# are reproducible from the submitted FASTA + provided sequences via alphafoldserver.com.
+data/browser_submissions/af3_server_output/
+
 # Allow small reference data deliberately
 !data/raw/.gitkeep
 !data/processed/.gitkeep

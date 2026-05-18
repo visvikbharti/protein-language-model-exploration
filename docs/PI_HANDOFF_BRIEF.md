@@ -36,11 +36,11 @@ We used protein language models (sequence-only ESM-2 + structure/ligand-conditio
 
 ---
 
-## Robustness validation — 4 of 5 PI-gate criteria ✅
+## Robustness validation — 5 of 5 PI-gate criteria ✅
 
 | # | Criterion | Status | Evidence |
 |---|---|---|---|
-| 1 | Two independent structure predictors agree on PLM5's PAM interface | ☐ in-flight | Boltz-2 ✅ done; AlphaFold3 Server pending (browser submission queued). Chai-1 was investigated and ruled out (requires bf16; V100 has none). |
+| 1 | Two independent structure predictors agree on PLM5's PAM interface | ✅ DONE | MSA-Boltz-2 (PLM5 prot↔DNA-PAM iPTM 0.937 ± 0.007 vs en31 0.927 ± 0.009; 391-aa truncated WED+PI) **and** AlphaFold3 Server (PLM5 prot↔DNA-PAM iPTM 0.940 ± 0.000 vs en31 0.936 ± 0.006; full-length 1629 aa). Both place all three variants in the high-confidence regime (all > 0.93, |Δ| ≤ 0.010 in either predictor). New finding from AF3: PLM5's A1325K shows a localized ~10-point pLDDT dip (82.6 vs 92.7 WT / 93.3 en31) — added falsifiable wet-lab prediction. Chai-1 ruled out (V100 bf16-incompat). |
 | 2 | Functional gap closed — predicted PAM tolerance ≥ NGG-only | ✅ DONE with caveat | Protein2PAM (job bf51a2fd) + Boltz PAM-scan (SLURM 221069, 15 jobs). Both methods cannot positively confirm PAM RELAXATION (en31 calibration fails in both — only wet lab can resolve this). But Boltz scan shows **PLM5 has highest absolute iPTM at every PAM tested (NGG 0.944; ≥0.934 across all 6 PAMs; range 0.010 vs WT's 0.033; ~6× tighter σ than WT)**. Positive structural-robustness evidence; the wet-lab PAM-relaxation test is the only direct probe. |
 | 3 | apo-ΔΔG filter calls independently bracketed | ✅ DONE | PLM4 reinstated after ThermoMPNN cross-check + direct Boltz refuted the proteinmpnn_ddg rejection. Filter is triage-only going forward. |
 | 4 | Pairwise epistasis effects characterized | ✅ DONE | ThermoMPNN-D, all 9 candidate pairs. PLM5 ratio 0.019; en31 ratio 7.1×. |

@@ -504,13 +504,13 @@ T1535V is the dominant outlier. LigandMPNN sampled T → V here with pooled freq
 
 ## 9. What's next
 
-**Status as of 2026-05-18 evening.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. **4 of 5 PI-gate criteria ✅** (only §2.1's second-predictor leg via AF3 Server remains, in flight as user browser task, ETA ~19:00 IST today); wet-lab handoff is the *terminal* step. **Tier 1 Phase A** (cross-species SpCas9 Boltz baseline, `notes/plans/2026-05-16_TIER1_MD_PROXY_PLAN.md`) completed in parallel 2026-05-18 — adds SpCas9 PI as a predicted-quality anchor; PLM5 sits in the same high-confidence regime as SpCas9 PI within documented truncation-size / MSA-depth confounds.
+**Status as of 2026-05-18 evening.** The in-silico campaign is complete (recommended candidate FnCas9-PLM5 = Y1249F / Y1341L / A1325K / K1479F). The project is in an **in-silico robustness phase** (live roadmap: `notes/plans/2026-05-15_ROBUSTNESS_PLAN.md`) before any wet-lab handoff. **5 of 5 PI-gate criteria ✅** — all gates closed as of 2026-05-18 ~22:00 IST when AlphaFold3 Server returned for all three submitted variants (WT, PLM5, en31) and agreed with MSA-Boltz that the three sit in the same high-confidence regime (all overall iPTM ≈ 0.93 in both predictors; all prot↔DNA-PAM iPTM > 0.93; inter-variant spread ≤ 0.010 in either predictor). Wet-lab handoff is now the *terminal* step. **Tier 1 Phase A** (cross-species SpCas9 Boltz baseline, `notes/plans/2026-05-16_TIER1_MD_PROXY_PLAN.md`) completed in parallel 2026-05-18 — adds SpCas9 PI as a predicted-quality anchor; PLM5 sits in the same high-confidence regime as SpCas9 PI within documented truncation-size / MSA-depth confounds.
 
 **Robustness-phase progress (2026-05-15 → 2026-05-18):**
 
 | § | Robustness dimension | Action(s) | Status |
 |---|---|---|---|
-| 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AF3 Server (☐ user browser task) | partial — Boltz done; AF3 Server pending. Chai-1 dropped (requires bf16; V100 lacks bf16) |
+| 2.1 | Structural — second-predictor agreement on PLM5 ≈ en31 | MSA-enabled Boltz across all 5 variants (✅); AlphaFold3 Server on WT/PLM5/en31 (✅, 2026-05-18 evening); Chai-1 ruled out (V100 bf16-incompat) | ✅ DONE — two predictors converge: PLM5 is en31-class on the PAM interface |
 | 2.2 | Method — apo-ΔΔG filter bracketing | ThermoMPNN cross-check (✅); direct Boltz on PLM4 (✅) | ✅ DONE — PLM4 reinstated |
 | 2.3 | Modeling assumption — pairwise epistasis | ThermoMPNN-D on all 9 candidate pairs (✅) | ✅ DONE — independence holds for PLM5 |
 | 2.4 | Functional — predicted PAM tolerance | Protein2PAM scan (✅ job bf51a2fd, null result) + Boltz PAM-variant scan (✅ SLURM 221069, 15 jobs) | ✅ DONE with caveat — PAM relaxation is wet-lab-only; Boltz scan shows PLM5 highest+tightest interface across all 6 PAMs |
